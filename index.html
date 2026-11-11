@@ -1,0 +1,1015 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Ikigai Mountain</title>
+<meta name="description" content="Nobody lands on the summit. Walk the four circles of ikigai as a 3D mountain: 27 stops where climbers get stuck, and a private journal that shows where you are.">
+<link rel="canonical" href="https://gnarcoding.com/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#e8edf2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161d2b" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="gnarcoding.com">
+<meta property="og:url" content="https://gnarcoding.com/">
+<meta property="og:title" content="The Ikigai Mountain">
+<meta property="og:description" content="Nobody lands on the summit. Walk the four circles of ikigai as a 3D mountain: 27 stops where climbers get stuck, and a private journal that shows where you are.">
+<meta property="og:image" content="https://gnarcoding.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A 3D mountain whose four faces are the four circles of ikigai, with a trail spiralling to the summit">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="fonts/shippori-mincho-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/zen-kaku-gothic-new-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face {
+  font-family: "Shippori Mincho";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("fonts/shippori-mincho-latin-500-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "Shippori Mincho";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("fonts/shippori-mincho-latin-700-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "Zen Kaku Gothic New";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/zen-kaku-gothic-new-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "Zen Kaku Gothic New";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("fonts/zen-kaku-gothic-new-latin-500-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "Zen Kaku Gothic New";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("fonts/zen-kaku-gothic-new-latin-700-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+:root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+
+/* Layout: a trail guide you scroll through on the left, the mountain held still on the right.
+   The climber on the mountain walks to whichever stop you're reading. On phones the mountain
+   sticks to the top and the guide scrolls underneath it. */
+:root {
+  --bg: #f3f5f8;
+  --sky-top: #c2cedd;
+  --sky-low: #e8edf2;
+  --fog: #e8edf2;
+  --ink: #1b2230;
+  --ink-soft: #586375;
+  --ink-faint: #8b94a3;
+  --line: rgba(27, 34, 48, 0.13);
+  --rail: #a3abb8;
+  --card: rgba(247, 249, 251, 0.86);
+  --field: #ffffff;
+  --chip: rgba(255, 255, 255, 0.6);
+  --chip-hover: rgba(255, 255, 255, 0.95);
+  --solid: #1b2230;
+  --solid-fg: #f3f5f8;
+  --tip-bg: #1b2230;
+  --tip-fg: #f3f5f8;
+  --summit: #b88a1c;
+  --exposure: 1;
+
+  --love: #da5762;
+  --good: #e9a034;
+  --needs: #2580c1;
+  --paid: #3fa362;
+
+  --font-display: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1420;
+    --sky-top: #050811;
+    --sky-low: #161d2b;
+    --fog: #161d2b;
+    --ink: #e7eaf0;
+    --ink-soft: #9aa3b4;
+    --ink-faint: #6c7586;
+    --line: rgba(231, 234, 240, 0.13);
+    --rail: #4b5466;
+    --card: rgba(13, 18, 29, 0.84);
+    --field: #161d2b;
+    --chip: rgba(255, 255, 255, 0.05);
+    --chip-hover: rgba(255, 255, 255, 0.12);
+    --solid: #e7eaf0;
+    --solid-fg: #0d121d;
+    --tip-bg: #f3f5f8;
+    --tip-fg: #1b2230;
+    --summit: #e2be62;
+    --exposure: 0.9;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1420;
+  --sky-top: #050811;
+  --sky-low: #161d2b;
+  --fog: #161d2b;
+  --ink: #e7eaf0;
+  --ink-soft: #9aa3b4;
+  --ink-faint: #6c7586;
+  --line: rgba(231, 234, 240, 0.13);
+  --rail: #4b5466;
+  --card: rgba(13, 18, 29, 0.84);
+  --field: #161d2b;
+  --chip: rgba(255, 255, 255, 0.05);
+  --chip-hover: rgba(255, 255, 255, 0.12);
+  --solid: #e7eaf0;
+  --solid-fg: #0d121d;
+  --tip-bg: #f3f5f8;
+  --tip-fg: #1b2230;
+  --summit: #e2be62;
+  --exposure: 0.9;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; color: inherit; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(360px, 560px) minmax(0, 1fr);
+}
+
+/* ---------- Mountain stage ---------- */
+.stage-wrap { grid-column: 2; grid-row: 1; min-width: 0; }
+.stage {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: linear-gradient(to bottom, var(--sky-top) 0%, var(--sky-low) 58%, var(--sky-low) 100%);
+}
+#scene {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  touch-action: pan-y;
+  cursor: grab;
+}
+#scene.dragging { cursor: grabbing; }
+#scene.pointing { cursor: pointer; }
+
+.stage-tag {
+  position: absolute;
+  top: 24px; left: 24px;
+  z-index: 3;
+  max-width: min(360px, calc(100% - 220px));
+  display: grid;
+  gap: 2px;
+}
+.stage-tag .tag-kicker {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.stage-tag .tag-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+.tag-nav { display: flex; gap: 6px; margin-top: 8px; }
+.tag-nav button {
+  border: 1px solid var(--line);
+  background: var(--chip);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.tag-nav button:hover { background: var(--chip-hover); }
+.tag-nav button:disabled { opacity: 0.4; cursor: default; }
+
+.viewbar {
+  position: absolute;
+  top: 24px; right: 24px;
+  z-index: 3;
+  display: flex;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.viewbar button {
+  border: 0;
+  background: transparent;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--ink-soft);
+}
+.viewbar button[aria-pressed="true"] { background: var(--solid); color: var(--solid-fg); }
+.viewbar button:not([aria-pressed="true"]):hover { color: var(--ink); }
+
+/* Elevation profile of the whole trail */
+.profile {
+  position: absolute;
+  left: 20px; right: 20px; bottom: 20px;
+  height: 96px;
+  z-index: 3;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+.profile svg { display: block; width: 100%; height: 100%; cursor: pointer; }
+.profile .p-line { fill: none; stroke: var(--ink); stroke-width: 1.4; stroke-linejoin: round; }
+.profile .p-lap { stroke: var(--ink-faint); stroke-width: 1; stroke-dasharray: 3 3; }
+.profile .p-lap-label {
+  fill: var(--ink-soft);
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.profile .p-stop { stroke: var(--ink); stroke-width: 1.4; }
+.profile .p-stop.on { stroke-width: 2.2; }
+.profile .p-here { stroke: var(--ink); stroke-width: 1.2; }
+.profile .p-climber { fill: #ffe0a0; stroke: var(--ink); stroke-width: 1.6; }
+
+/* Labels projected from the 3D scene */
+.labels { position: absolute; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+.lbl { position: absolute; left: 0; top: 0; white-space: nowrap; will-change: transform, opacity; }
+.lbl-side {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 9px 3px 7px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.lbl-side i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.lbl-zone {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(10, 14, 24, 0.6), 0 0 8px rgba(10, 14, 24, 0.35);
+}
+.lbl-summit {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.lbl-here {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 4px 11px 4px 5px;
+  border-radius: 999px;
+  background: var(--solid);
+  color: var(--solid-fg);
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(10, 14, 24, 0.22);
+}
+.lbl-here b {
+  display: inline-grid; place-items: center;
+  min-width: 20px; height: 20px;
+  padding-inline: 5px;
+  border-radius: 999px;
+  background: var(--c);
+  color: #fff;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+}
+
+.tip {
+  position: absolute; left: 0; top: 0;
+  z-index: 6;
+  max-width: 260px;
+  padding: 8px 11px;
+  border-radius: 9px;
+  background: var(--tip-bg);
+  color: var(--tip-fg);
+  font-size: 12px;
+  line-height: 1.45;
+  pointer-events: none;
+  box-shadow: 0 6px 20px rgba(10, 14, 24, 0.2);
+}
+.tip b { display: block; font-weight: 700; font-size: 12.5px; }
+.nogl {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  padding: 24px;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+/* ---------- Trail guide ---------- */
+.story {
+  grid-column: 1; grid-row: 1;
+  min-width: 0;
+  padding-inline: 44px 40px;
+  border-right: 1px solid var(--line);
+}
+.intro { padding-block: 64px 14vh; }
+.kanji {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: 0.34em;
+  color: var(--ink-soft);
+}
+h1 {
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.thesis {
+  margin: 0 0 22px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.intro p { max-width: 60ch; }
+.intro .lede { color: var(--ink-soft); margin: 0 0 28px; }
+.label {
+  margin: 0 0 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.faces {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 18px;
+}
+.faces li { display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 2px 10px; align-items: baseline; }
+.faces i { width: 12px; height: 12px; border-radius: 50%; background: var(--c); transform: translateY(1px); }
+.faces b { font-weight: 700; }
+.faces span { grid-column: 2; color: var(--ink-soft); font-size: 13px; }
+.ridges { color: var(--ink-soft); font-size: 14px; margin: 0 0 30px; }
+.starts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.start {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 13px 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--chip);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+.start i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); flex: none; }
+.start:hover { background: var(--chip-hover); }
+.start[aria-checked="true"] { border-color: var(--ink); background: var(--chip-hover); }
+.start-note { color: var(--ink-soft); font-size: 13px; margin: 0 0 30px; }
+.cta-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.cta {
+  border: 0;
+  padding: 12px 22px;
+  border-radius: 999px;
+  background: var(--solid);
+  color: var(--solid-fg);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ghost {
+  border: 1px solid var(--line);
+  background: transparent;
+  padding: 11px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.ghost:hover { background: var(--chip-hover); }
+
+/* The trail itself: a dashed rail with one dot per stop */
+.stops {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 34px;
+  position: relative;
+}
+.stops::before {
+  content: "";
+  position: absolute;
+  left: 8px; top: 0; bottom: 0;
+  border-left: 2px dashed var(--rail);
+}
+.stop {
+  position: relative;
+  padding-block: 11vh 15vh;
+  scroll-margin-top: 0px;
+}
+.stop .dot {
+  position: absolute;
+  left: -34px;
+  top: calc(11vh + 2px);
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 3px solid var(--c);
+  transition: background-color .3s ease, transform .3s ease;
+}
+.stop.passed .dot { background: var(--c); }
+.stop.active .dot { background: var(--c); transform: scale(1.3); box-shadow: 0 0 0 5px var(--bg), 0 0 0 7px var(--c); }
+.stop-kicker {
+  margin: 0 0 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.stop-title {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+.where {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  margin: 0 0 22px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.where b { color: var(--ink); font-weight: 700; }
+.held { display: inline-flex; gap: 4px; }
+.held i { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--c); }
+.held i.on { background: var(--c); }
+.feels {
+  margin: 0 0 26px;
+  font-size: 17px;
+  line-height: 1.72;
+  max-width: 60ch;
+  text-wrap: pretty;
+}
+.voice { margin: 0 0 28px; }
+.voice figcaption, .stop h3, .carry span {
+  display: block;
+  margin: 0 0 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.voice blockquote {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+.signs { margin: 0 0 26px; }
+.signs ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.signs li { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.signs li::before { content: ""; width: 14px; height: 2px; background: var(--c); transform: translateY(-4px); }
+.through { margin: 0 0 26px; }
+.through p { margin: 0; font-size: 16px; line-height: 1.7; max-width: 60ch; }
+.carry {
+  margin: 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 21px;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+.carry span { font-family: var(--font-body); }
+
+.outro { padding-block: 10vh 18vh; }
+.outro h2 {
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 1.12;
+}
+.outro p { max-width: 60ch; }
+.outro .note { color: var(--ink-soft); font-size: 13.5px; margin-bottom: 36px; }
+.index { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.index button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 26px 12px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.index button:hover { background: var(--chip-hover); }
+.index .n { color: var(--ink-faint); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; }
+.index i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.index .t { font-weight: 500; min-width: 0; }
+.index .z { color: var(--ink-soft); font-size: 12px; white-space: nowrap; }
+.index .lap-row {
+  margin: 14px 0 4px;
+  padding-left: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* ---------- Phones and narrow windows ---------- */
+@media (max-width: 900px) {
+  .layout { display: block; }
+  .stage-wrap {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 5;
+    height: 46vh;
+    height: 46svh;
+    min-height: 290px;
+  }
+  .stage { position: relative; top: auto; height: 100%; }
+  .stage-tag { display: none; }
+  .viewbar { top: 10px; right: 12px; }
+  .viewbar button { padding: 5px 10px; }
+  .profile { left: 10px; right: 10px; bottom: 10px; height: 52px; border-radius: 10px; }
+  .story { padding-inline: 20px; border-right: 0; }
+  .intro { padding-block: 28px 8vh; }
+  h1 { font-size: 34px; }
+  .thesis { font-size: 18px; }
+  .stop { padding-block: 6vh 10vh; scroll-margin-top: calc(46svh + 4px); }
+  .stop .dot { top: calc(6vh + 2px); }
+  .stop-title { font-size: 28px; }
+  .voice blockquote { font-size: 21px; }
+  .feels { font-size: 16px; }
+  .outro, .intro { scroll-margin-top: calc(46svh + 4px); }
+  .faces { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stop .dot, .start { transition: none; }
+}
+
+/* ---------- Trail journal ---------- */
+.journal-btn {
+  position: absolute;
+  top: 70px; right: 24px;
+  z-index: 3;
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 14px 7px 10px;
+  background: var(--card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.journal-btn:hover { background: var(--chip-hover); }
+.journal-btn svg { width: 16px; height: 16px; }
+.last-reading {
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 14px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px;
+}
+.last-reading b { font-weight: 700; }
+.linkish {
+  border: 0; background: none; padding: 0;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.stop.is-you .stop-kicker::after {
+  content: " · You are here";
+  color: var(--summit);
+}
+.outro-journal { margin: 0 0 40px; padding: 20px 22px; border: 1px solid var(--line); border-radius: 14px; }
+.outro-journal h3 { margin: 0 0 6px; font-family: var(--font-display); font-size: 22px; }
+.outro-journal p { margin: 0 0 14px; color: var(--ink-soft); }
+
+.lbl-you {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--summit);
+  color: #1b2230;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 12px rgba(10, 14, 24, 0.25);
+}
+.profile .p-you { fill: var(--summit); stroke: var(--ink); stroke-width: 1.2; }
+
+.portal {
+  position: fixed; inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: max(20px, env(safe-area-inset-top, 0px)) 16px max(20px, env(safe-area-inset-bottom, 0px));
+  background: rgba(8, 12, 22, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.portal-panel {
+  width: min(780px, 100%);
+  height: min(860px, calc(100dvh - 40px));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(8, 12, 22, 0.35);
+}
+.portal-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 18px 22px 10px 32px;
+}
+.portal-brand { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+.portal-brand .kanji-sm { font-family: var(--font-display); color: var(--ink-soft); letter-spacing: 0.25em; font-size: 13px; }
+.portal-brand h2 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 22px; }
+.portal-close {
+  width: 36px; height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.portal-close:hover { background: var(--chip-hover); }
+.portal-steps {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  padding: 4px 32px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.portal-steps button {
+  border: 0; background: none; padding: 6px 0 0;
+  text-align: left;
+  cursor: pointer;
+  display: grid; gap: 6px;
+  min-width: 0;
+}
+.portal-steps button::before {
+  content: "";
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+}
+.portal-steps button.done::before { background: var(--c); opacity: 0.55; }
+.portal-steps button[aria-current="step"]::before { background: var(--c); opacity: 1; }
+.portal-steps span {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--ink-soft);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.portal-steps button[aria-current="step"] span { color: var(--ink); }
+.portal-body { overflow-y: auto; padding: 26px 32px 32px; min-height: 0; overscroll-behavior: contain; }
+.portal-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 22px 14px 32px;
+  border-top: 1px solid var(--line);
+}
+.save-status { color: var(--ink-soft); font-size: 12.5px; min-width: 0; }
+.foot-nav { display: flex; gap: 8px; flex: none; }
+.foot-nav .cta, .foot-nav .ghost { padding: 10px 18px; font-size: 14px; }
+.cta:disabled { opacity: 0.5; cursor: default; }
+
+.j-head { margin-bottom: 26px; }
+.j-face {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0 0 6px;
+}
+.j-face i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.j-title { margin: 0 0 8px; font-family: var(--font-display); font-weight: 700; font-size: 32px; line-height: 1.12; text-wrap: balance; }
+.j-intro { margin: 0; color: var(--ink-soft); max-width: 58ch; }
+
+.q { display: grid; gap: 8px; margin: 0 0 28px; }
+.q > label, .q > .q-label { font-weight: 700; font-size: 16.5px; line-height: 1.4; }
+.q .hint { color: var(--ink-soft); font-size: 13px; margin-top: -4px; }
+.q textarea, .q select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--field);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15.5px;
+  line-height: 1.55;
+}
+.q textarea { min-height: 96px; resize: vertical; }
+.q textarea:focus, .q select:focus { outline: 2px solid var(--c); outline-offset: 1px; }
+.scale { display: grid; grid-template-columns: minmax(0, 1fr) 52px; align-items: center; gap: 14px; }
+.scale input[type="range"] { width: 100%; accent-color: var(--c); }
+.scale-val {
+  font-family: var(--font-display); font-weight: 700; font-size: 22px;
+  text-align: right; font-variant-numeric: tabular-nums;
+}
+.scale-val.unset { color: var(--ink-faint); font-size: 16px; }
+.scale.unset input[type="range"] { opacity: 0.45; }
+.scale-ends { display: flex; justify-content: space-between; gap: 12px; color: var(--ink-soft); font-size: 12.5px; padding-right: 66px; }
+
+.welcome h3 { margin: 0 0 12px; font-family: var(--font-display); font-weight: 700; font-size: 32px; line-height: 1.12; text-wrap: balance; }
+.welcome p { max-width: 60ch; }
+.welcome .facts { list-style: none; margin: 22px 0; padding: 0; display: grid; gap: 12px; }
+.welcome .facts li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; color: var(--ink-soft); font-size: 14px; }
+.welcome .facts li::before { content: ""; width: 8px; height: 8px; margin-top: 7px; border-radius: 50%; background: var(--summit); }
+.welcome .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 8px; }
+.confirm { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; }
+
+.ready h3, .working h3 { margin: 0 0 10px; font-family: var(--font-display); font-weight: 700; font-size: 30px; }
+.ready p, .working p { color: var(--ink-soft); max-width: 58ch; }
+.error-note { color: var(--love); font-weight: 500; }
+.working svg { width: 100%; max-width: 420px; height: 90px; display: block; margin: 18px 0; }
+.working .w-path { fill: none; stroke: var(--ink-faint); stroke-width: 2; stroke-dasharray: 6 6; }
+.working .w-walk { fill: none; stroke: var(--summit); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 60 600; animation: walk 2.4s linear infinite; }
+@keyframes walk { from { stroke-dashoffset: 60; } to { stroke-dashoffset: -600; } }
+
+.reading .r-kicker { margin: 0 0 6px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-soft); }
+.reading .r-title { margin: 0 0 4px; font-family: var(--font-display); font-weight: 700; font-size: 36px; line-height: 1.1; text-wrap: balance; }
+.reading .r-place { margin: 0 0 16px; color: var(--ink-soft); font-size: 14px; }
+.reading .r-why { font-size: 16.5px; line-height: 1.7; margin: 0 0 22px; max-width: 62ch; }
+.reading .r-movement { margin: -8px 0 22px; color: var(--ink-soft); font-size: 14.5px; }
+.care {
+  margin: 0 0 24px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--field);
+  font-size: 15px;
+}
+.care b { display: block; margin-bottom: 4px; }
+.r-circles {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+  margin: 0 0 26px;
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.r-circles svg { width: 180px; height: 180px; max-width: 100%; display: block; }
+.r-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; min-width: 0; }
+.r-bars li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: baseline; }
+.r-bars .nm { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.r-bars .nm i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); flex: none; }
+.r-bars .tag { font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+.r-bars .val { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; }
+.r-bars .bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.r-bars .bar b { display: block; height: 100%; background: var(--c); border-radius: 3px; }
+.reading h4 { margin: 0 0 8px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-soft); }
+.reading .r-block { margin: 0 0 24px; }
+.reading .r-block p { margin: 0; line-height: 1.7; max-width: 62ch; }
+.reading blockquote { margin: 0; font-family: var(--font-display); font-weight: 500; font-size: 22px; line-height: 1.4; text-wrap: balance; }
+.reading ul.r-list, .reading ol.r-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.reading .r-list li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; line-height: 1.6; }
+.reading ul.r-list li::before { content: ""; width: 14px; height: 2px; background: var(--summit); margin-top: 11px; }
+.reading ol.r-list { counter-reset: s; }
+.reading ol.r-list li::before {
+  counter-increment: s; content: counter(s);
+  width: 22px; height: 22px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--solid); color: var(--solid-fg);
+  font-size: 12px; font-weight: 700;
+}
+.r-next { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.r-next b { font-family: var(--font-display); font-size: 20px; }
+.r-carry { margin: 0 0 26px; padding-top: 16px; border-top: 1px solid var(--line); font-family: var(--font-display); font-weight: 700; font-size: 21px; line-height: 1.4; }
+.r-source { color: var(--ink-soft); font-size: 13px; margin: 0 0 18px; }
+.r-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 34px; }
+
+.history { border-top: 1px solid var(--line); padding-top: 18px; }
+.history ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.history li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.history .h-open {
+  border: 0; background: transparent; text-align: left; cursor: pointer;
+  padding: 8px 10px; border-radius: 8px;
+  display: grid; gap: 2px; min-width: 0;
+}
+.history .h-open:hover, .history li.on .h-open { background: var(--chip-hover); }
+.history .h-date { font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.history .h-stop { font-weight: 700; font-size: 14px; }
+.history .h-dots { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; }
+.history .h-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.history .h-del { border: 0; background: none; color: var(--ink-soft); font-size: 12px; cursor: pointer; padding: 6px 8px; }
+.history .h-del:hover { color: var(--ink); text-decoration: underline; }
+
+@media (max-width: 900px) {
+  .journal-btn { top: 48px; right: 12px; padding: 5px 11px 5px 8px; }
+}
+@media (max-width: 640px) {
+  .portal { padding: 0; }
+  .portal-panel { width: 100%; height: 100%; border-radius: 0; border: 0; }
+  .portal-head { padding: max(14px, env(safe-area-inset-top, 0px)) 14px 8px 20px; }
+  .portal-steps { padding: 2px 20px 10px; gap: 4px; }
+  .portal-steps span { display: none; }
+  .portal-body { padding: 20px 20px 28px; }
+  .portal-foot { padding: 10px 14px max(12px, env(safe-area-inset-bottom, 0px)) 20px; }
+  .j-title, .welcome h3 { font-size: 27px; }
+  .reading .r-title { font-size: 30px; }
+  .r-circles { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .r-bars { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .working .w-walk { animation: none; stroke-dasharray: none; }
+}
+
+.site-foot {
+  margin-top: 56px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 4px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+.site-foot p { margin: 0; max-width: 60ch; }
+.site-foot .brand { font-weight: 700; color: var(--ink); letter-spacing: 0.02em; }
+.nojs { margin: 0 0 24px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; }
+
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="stage-wrap">
+    <div class="stage" id="stage">
+      <canvas id="scene" aria-label="A 3D mountain whose four faces are the four circles of ikigai, with a trail spiralling up to the summit"></canvas>
+      <div class="labels" id="labels" aria-hidden="true"></div>
+      <div class="stage-tag" aria-live="polite">
+        <span class="tag-kicker" id="tagKicker">The whole trail</span>
+        <span class="tag-title" id="tagTitle">27 stops, 3 laps, 1 summit</span>
+        <div class="tag-nav">
+          <button type="button" id="prevStop">↑ Previous</button>
+          <button type="button" id="nextStop">Next stop ↓</button>
+        </div>
+      </div>
+      <div class="viewbar" role="group" aria-label="View">
+        <button type="button" id="viewMountain" aria-pressed="true">Mountain</button>
+        <button type="button" id="viewAbove" aria-pressed="false">From above</button>
+      </div>
+      <button type="button" class="journal-btn" data-open-journal>
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5h8.5a1.5 1.5 0 0 1 1.5 1.5v9.5H4.5A1.5 1.5 0 0 1 3 12z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        Trail Journal
+      </button>
+      <div class="profile" id="profile" role="group" aria-label="Elevation profile of the whole trail. Select a stop to jump to it."></div>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+  </div>
+
+  <main class="story" id="story">
+    <section class="intro" id="intro">
+      <noscript><p class="nojs">The mountain, the 27 stops and the Trail Journal need JavaScript. Turn it on to start the climb.</p></noscript>
+      <p class="kanji" lang="ja">生き甲斐</p>
+      <h1>The Ikigai Mountain</h1>
+      <p class="thesis">No one lands on the summit. You start at the foot of one side and circle all four, again and again, until the paths meet at the top.</p>
+      <p class="lede" id="lede">This is the whole trail, stop by stop. Every stop is a place where real climbers get stuck. Scroll to walk it, and the climber on the mountain walks with you.</p>
+
+      <p class="label">The four faces</p>
+      <ul class="faces">
+        <li style="--c: var(--love)"><i></i><b>What you love</b><span>The north face</span></li>
+        <li style="--c: var(--good)"><i></i><b>What you're good at</b><span>The west face</span></li>
+        <li style="--c: var(--needs)"><i></i><b>What the world needs</b><span>The east face</span></li>
+        <li style="--c: var(--paid)"><i></i><b>What you can be paid for</b><span>The south face</span></li>
+      </ul>
+      <p class="ridges">Where two circles overlap, the ground rises into a ridge: Passion, Mission, Vocation and Profession. Where three overlap it rises again, and each of those ledges is missing exactly one circle. Where all four meet is the summit.</p>
+
+      <p class="label" id="startLabel">Where does your climb start?</p>
+      <div class="starts" id="starts" role="radiogroup" aria-labelledby="startLabel"></div>
+      <p class="start-note">Your trailhead changes the order you meet the stops. Everyone still passes every one of them.</p>
+
+      <div class="cta-row">
+        <button type="button" class="cta" id="begin">Start climbing ↓</button>
+        <button type="button" class="ghost" data-open-journal>Find where you are</button>
+        <button type="button" class="ghost" id="toIndex">See every stop</button>
+      </div>
+      <p class="last-reading" id="lastReading" hidden></p>
+    </section>
+
+    <ol class="stops" id="stops"></ol>
+
+    <section class="outro" id="outro">
+      <p class="label">Seen from above</p>
+      <h2>Every lap circled the same center</h2>
+      <p>Look down on the mountain and the four faces turn back into four circles. The trail you walked is a spiral through all of them, over and over. No one reaches the middle by standing still on one side, and no one skips the hard faces. You go around until the circles overlap under your feet.</p>
+      <p class="note">The four-circle diagram is a modern Western take on the idea. In Japan, ikigai usually means something smaller and more everyday: whatever makes your days feel worth living.</p>
+
+      <div class="outro-journal">
+        <h3>Where are you on it?</h3>
+        <p>Answer fifteen questions in your Trail Journal. It places you at a stop and shows you the next one. Your answers stay in this browser and never leave it.</p>
+        <button type="button" class="cta" data-open-journal>Open the Trail Journal</button>
+      </div>
+
+      <p class="label">The whole trail</p>
+      <ol class="index" id="index"></ol>
+
+      <footer class="site-foot">
+        <p class="brand">gnarcoding.com</p>
+        <p>Your Trail Journal stays in this browser. Nothing you write is sent anywhere, and clearing your browser data erases it.</p>
+      </footer>
+    </section>
+  </main>
+</div>
+
+<div class="portal" id="portal" hidden role="dialog" aria-modal="true" aria-labelledby="portalTitle">
+  <div class="portal-panel">
+    <header class="portal-head">
+      <div class="portal-brand">
+        <span class="kanji-sm" lang="ja">生き甲斐</span>
+        <h2 id="portalTitle" tabindex="-1">Trail Journal</h2>
+      </div>
+      <button type="button" class="portal-close" id="portalClose" aria-label="Close the journal">×</button>
+    </header>
+    <nav class="portal-steps" id="portalSteps" aria-label="Journal sections"></nav>
+    <div class="portal-body" id="portalBody"></div>
+    <footer class="portal-foot">
+      <span class="save-status" id="saveStatus" aria-live="polite"></span>
+      <div class="foot-nav">
+        <button type="button" class="ghost" id="jBack">Back</button>
+        <button type="button" class="cta" id="jNext">Begin</button>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<script src="vendor/three.min.js" defer></script>
+<script src="app.js" defer></script>
+</body>
+</html>

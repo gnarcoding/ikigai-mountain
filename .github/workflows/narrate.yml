@@ -35,6 +35,8 @@ jobs:
         run: node scripts/narrate.mjs
 
       - name: Commit the audio
+        # Runs even if recording stopped partway, so nothing paid for is lost.
+        if: always()
         run: |
           if [ -n "$(git status --porcelain -- audio)" ]; then
             git config user.name "github-actions[bot]"

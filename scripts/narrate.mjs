@@ -29,15 +29,37 @@ const end = appJs.indexOf("  /* Circles, zones and ridges");
 if (start < 0 || end < 0) throw new Error("Could not find the stop text in app.js");
 const data = new Function(appJs.slice(start, end) + "\nreturn { TRAILHEADS, FACE_STOPS, RIDGE_STOPS, FALSE_SUMMIT, SUMMIT_STOP };")();
 
-const sections = [];
-for (const key of Object.keys(data.TRAILHEADS)) sections.push(["trailhead-" + key, data.TRAILHEADS[key]]);
-for (const key of Object.keys(data.FACE_STOPS)) data.FACE_STOPS[key].forEach((d, i) => sections.push([`${key}-${i + 1}`, d]));
-for (const key of Object.keys(data.RIDGE_STOPS)) data.RIDGE_STOPS[key].forEach((d, i) => sections.push([`${key}-${i + 1}`, d]));
+// Record in the order a visitor meets the stops on the default trail (the
+// page starts on the Love side), so a run that hits the credit budget still
+// covers the trail most people walk. The other trailheads come last.
+const SIDE_ANGLE = { love: 90, good: 180, needs: 0, paid: 270 };
+const sideAt = (deg) => Object.keys(SIDE_ANGLE).reduce((best, k) => {
+  const d = Math.abs(((deg - SIDE_ANGLE[k] + 540) % 360) - 180);
+  return d < best.d ? { k, d } : best;
+}, { k: "love", d: 999 }).k;
+const ridgeAt = (deg) => ({ 45: "mission", 135: "passion", 225: "profession" })[((deg % 360) + 360) % 360] || "vocation";
+
+const DEFAULT_START = "love";
+const sections = [["trailhead-" + DEFAULT_START, data.TRAILHEADS[DEFAULT_START]]];
+const faceVisits = {}, ridgeVisits = {};
+for (let k = 1; k <= 24; k++) {
+  const deg = SIDE_ANGLE[DEFAULT_START] + k * 45;
+  if (k % 2 === 0) {
+    const side = sideAt(deg);
+    faceVisits[side] = (faceVisits[side] || 0) + 1;
+    sections.push([`${side}-${faceVisits[side]}`, data.FACE_STOPS[side][faceVisits[side] - 1]]);
+  } else {
+    const ridge = ridgeAt(deg);
+    ridgeVisits[ridge] = (ridgeVisits[ridge] || 0) + 1;
+    sections.push([`${ridge}-${ridgeVisits[ridge]}`, data.RIDGE_STOPS[ridge][ridgeVisits[ridge] - 1]]);
+  }
+}
 sections.push(["false-summit", data.FALSE_SUMMIT], ["summit", data.SUMMIT_STOP]);
+for (const key of Object.keys(data.TRAILHEADS)) if (key !== DEFAULT_START) sections.push(["trailhead-" + key, data.TRAILHEADS[key]]);
+if (sections.length !== 30 || sections.some(([, d]) => !d)) throw new Error("Stop list doesn't match the trail (expected 30 sections).");
 
 // ---------------------------------------------------------------- scripts
 
-const PAUSE = '<break time="0.7s" />';
 const lowerFirst = (s) => s.charAt(0).toLowerCase() + s.slice(1);
 const upperFirst = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const clean = (s) => s
@@ -57,7 +79,8 @@ function scriptFor(d) {
     `${clean(d.throughLabel || "The way through")}. ${clean(d.through)}`,
     `A question to carry up: ${clean(d.question)}`
   ];
-  return parts.join(`\n\n${PAUSE}\n\n`);
+  // Paragraph breaks give natural pauses without spending credits on pause tags.
+  return parts.join("\n\n");
 }
 
 // Preview: node scripts/narrate.mjs --print [id]
@@ -107,6 +130,11 @@ async function record(text) {
       });
       if (res.ok) return { audio: Buffer.from(await res.arrayBuffer()), format };
       const detail = (await res.text()).slice(0, 300);
+      if (/quota|insufficient|credits|character_limit/i.test(detail)) {
+        const err = new Error(`ElevenLabs is out of credits for now (${res.status}).`);
+        err.outOfCredits = true;
+        throw err;
+      }
       if (res.status === 429 || res.status >= 500) { await sleep(2000 * attempt); continue; }
       if ((res.status === 400 || res.status === 422) && /output_format|format/i.test(detail) && format !== FORMATS.at(-1)) break;
       throw new Error(`ElevenLabs answered ${res.status}: ${detail}`);
@@ -115,7 +143,10 @@ async function record(text) {
   throw new Error("ElevenLabs kept failing after retries.");
 }
 
-let recorded = 0, kept = 0, characters = 0;
+// Never send more than this many characters in one run (1 character ≈ 1 credit).
+const budget = Number(config.maxCharactersPerRun) || Infinity;
+let recorded = 0, kept = 0, characters = 0, failed = null;
+const waiting = [];
 for (const [id, d] of sections) {
   const text = scriptFor(d);
   const format = FORMATS[0];
@@ -125,9 +156,19 @@ for (const [id, d] of sections) {
   let exists = false;
   try { exists = (await stat(path.join(AUDIO_DIR, file))).size > 0; } catch { /* missing */ }
   if (prev && prev.hash === hash && exists) { kept++; continue; }
+  if (failed || characters + text.length > budget) { waiting.push(`${id} (${text.length})`); continue; }
 
   console.log(`Recording ${id} (${text.length} characters)…`);
-  const { audio, format: used } = await record(text);
+  let result;
+  try {
+    result = await record(text);
+  } catch (err) {
+    failed = err;
+    console.log(err.message);
+    waiting.push(`${id} (${text.length})`);
+    continue;
+  }
+  const { audio, format: used } = result;
   await writeFile(path.join(AUDIO_DIR, file), audio);
   manifest.sections[id] = {
     file,
@@ -151,3 +192,10 @@ manifest.model = config.modelId;
 await writeFile(MANIFEST, JSON.stringify(manifest, null, 2) + "\n");
 
 console.log(`Done: recorded ${recorded} stop(s) (${characters} characters), kept ${kept} unchanged.`);
+if (waiting.length) {
+  console.log(`Still to record, ${waiting.length} stop(s): ${waiting.join(", ")}`);
+  console.log("Run the workflow again once there are credits (for example when the plan renews).");
+}
+// A real error (not just running out of credits) fails the run, after the
+// audio recorded so far has been saved for the commit step.
+if (failed && !failed.outOfCredits) process.exit(1);

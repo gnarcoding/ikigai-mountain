@@ -44,6 +44,7 @@ The GitHub Actions workflow `.github/workflows/narrate.yml` runs the script when
 
 - **API key:** the repository secret `ELEVENLABS_API_KEY`. It never appears in the code.
 - **Voice and settings:** `narration.config.json` (`voiceId`, `modelId`, `voiceSettings`). Changing the voice re-records every stop.
+- **Budget:** `maxCharactersPerRun` caps what one run can spend (1 character is about 1 credit). Stops are recorded in the order visitors meet them on the default Love-side trail, then the other three trailheads. Whatever doesn't fit, or hits ElevenLabs' credit limit, waits for the next run; start one from the Actions tab once credits renew.
 - **Preview the scripts without spending credits:** `node scripts/narrate.mjs --print`, or `--print love-2` for one stop.
 
 ## DNS at Namecheap

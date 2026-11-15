@@ -154,6 +154,9 @@ async function record(text) {
 
 // Never send more than this many characters in one run (1 character ≈ 1 credit).
 const budget = Number(config.maxCharactersPerRun) || Infinity;
+// Sections listed in "skip" are never recorded until they're taken off the list.
+const skip = new Set(config.skip || []);
+const skipped = [];
 let recorded = 0, kept = 0, characters = 0, failed = null;
 const waiting = [];
 for (const [id, d] of sections) {
@@ -165,6 +168,7 @@ for (const [id, d] of sections) {
   let exists = false;
   try { exists = (await stat(path.join(AUDIO_DIR, file))).size > 0; } catch { /* missing */ }
   if (prev && prev.hash === hash && exists) { kept++; continue; }
+  if (skip.has(id)) { skipped.push(id); continue; }
   if (failed || characters + text.length > budget) { waiting.push(`${id} (${text.length})`); continue; }
 
   console.log(`Recording ${id} (${text.length} characters)…`);
@@ -201,6 +205,7 @@ manifest.model = config.modelId;
 await writeFile(MANIFEST, JSON.stringify(manifest, null, 2) + "\n");
 
 console.log(`Done: recorded ${recorded} stop(s) (${characters} characters), kept ${kept} unchanged.`);
+if (skipped.length) console.log(`Skipped on purpose (see "skip" in narration.config.json): ${skipped.join(", ")}`);
 if (waiting.length) {
   console.log(`Still to record, ${waiting.length} stop(s): ${waiting.join(", ")}`);
   console.log("Run the workflow again once there are credits (for example when the plan renews).");

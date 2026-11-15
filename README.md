@@ -46,6 +46,7 @@ The GitHub Actions workflow `.github/workflows/narrate.yml` runs the script when
 - **Intro:** the intro has a hand-written listening script in `narration/intro.txt`, recorded before the stops. Edit that file to change what's read there.
 - **Voice and settings:** `narration.config.json` (`voiceId`, `modelId`, `voiceSettings`). Changing the voice re-records every stop.
 - **Budget:** `maxCharactersPerRun` caps what one run can spend (1 character is about 1 credit). Stops are recorded in the order visitors meet them on the default Love-side trail, then the other three trailheads. Whatever doesn't fit, or hits ElevenLabs' credit limit, waits for the next run; start one from the Actions tab once credits renew.
+- **Skipped sections:** ids listed under `skip` in `narration.config.json` are never recorded. The trailheads for the Good-at, World-needs and Paid-for starting sides are skipped for now; remove them from the list to record them (about 2,800 credits).
 - **Preview the scripts without spending credits:** `node scripts/narrate.mjs --print`, or `--print love-2` for one stop.
 
 ## DNS at Namecheap

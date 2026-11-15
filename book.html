@@ -204,6 +204,16 @@ h1 {
   line-height: 1.45;
   text-wrap: pretty;
 }
+.host {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  margin: 0 0 28px;
+}
+.host img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px var(--bg), 0 0 0 4px var(--line); }
+.host p { margin: 0; font-size: 14.5px; color: var(--ink-soft); max-width: 44ch; }
+.host b { color: var(--ink); font-weight: 700; }
 .facts {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -298,6 +308,11 @@ h1 {
     <p class="kicker">One hour, one on one</p>
     <h1 id="bookTitle">Book an hour</h1>
     <p class="thesis">Sixty minutes on whatever you're stuck on: where you are on the mountain, a codebase, or a security problem.</p>
+
+    <div class="host">
+      <img src="/img/eric-192.webp" srcset="/img/eric-96.webp 96w, /img/eric-192.webp 192w" sizes="64px" width="64" height="64" alt="Eric">
+      <p><b>You'll be talking with Eric,</b> the person behind gnarcoding. Bring your project and we'll work on it together.</p>
+    </div>
 
     <dl class="facts">
       <div><dt>Price</dt><dd>$100</dd></div>

@@ -3,7 +3,7 @@
   "use strict";
 
   // The Cal.com event to book: "username/event-slug".
-  var CAL_LINK = "rick/get-rick-rolled";
+  var CAL_LINK = "gnarcoding/60min";
 
   var BOOKING_URL = "https://cal.com/" + CAL_LINK;
   var statusEl = document.getElementById("calStatus");

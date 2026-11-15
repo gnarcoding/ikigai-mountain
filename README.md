@@ -17,7 +17,9 @@ There is no build step. Edit the files and deploy the folder as it is.
 
 ## Privacy
 
-The Trail Journal saves answers and readings in the visitor's own browser (`localStorage`, keys starting with `ikigai-mountain:`). Nothing is sent to a server, and the page loads nothing from third parties: fonts and three.js are served from this site. The Content Security Policy in `vercel.json` enforces that (`default-src 'self'`).
+The Trail Journal saves answers and readings in the visitor's own browser (`localStorage`, keys starting with `ikigai-mountain:`). Nothing is sent to a server, and the mountain page loads nothing from third parties: fonts and three.js are served from this site. The Content Security Policy in `vercel.json` enforces that (`default-src 'self'`).
+
+The one exception is `/book`, whose policy also allows Cal.com's embed script and frame (`app.cal.com`, `cal.com`). Card details are entered inside Cal.com's frame and handled by Stripe, never by this site.
 
 ## Deployment
 
@@ -27,6 +29,12 @@ The site is the Vercel project **ikigai-mountain** in gnarcoding's projects. Eve
 | --- | --- |
 | `gnarcoding.com` | Production |
 | `www.gnarcoding.com` | 308 permanent redirect to `gnarcoding.com` |
+
+## Booking (`/book`)
+
+`book.html` and `book.js` embed the Cal.com event **cal.com/gnarcoding/60min**: 60 minutes, $100, paid through Stripe before the booking is confirmed, held on Google Meet. To point the page at a different event, change `CAL_LINK` at the top of `book.js` and the fallback link in `book.html`. Price, length, availability and the meeting location live in Cal.com, not in this repo. If you change them there, update the matching text in `book.html`.
+
+The page promises a full refund for cancellations made 24 or more hours ahead. Refunds are not automatic: issue them from the Stripe dashboard.
 
 ## DNS at Namecheap
 

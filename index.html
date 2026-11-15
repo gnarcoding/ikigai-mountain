@@ -327,6 +327,19 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--ink); outline-o
   font-variant-numeric: tabular-nums;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
 }
+.lbl .nm-short { display: none; }
+/* Phones: shorter names and smaller type so the labels fit round a small mountain. */
+@media (max-width: 600px) {
+  .lbl .nm-full { display: none; }
+  .lbl .nm-short { display: inline; }
+  .lbl-side { gap: 5px; padding: 2px 8px 2px 6px; font-size: 9.5px; letter-spacing: 0.08em; }
+  .lbl-side i { width: 7px; height: 7px; }
+  .lbl-zone { font-size: 11.5px; }
+  .lbl-summit { font-size: 12.5px; padding: 2px 9px; }
+  .lbl-here { gap: 6px; padding: 3px 10px 3px 4px; font-size: 11px; max-width: calc(100vw - 40px); }
+  .lbl-here b { min-width: 18px; height: 18px; font-size: 10px; }
+  .lbl-here .foil-text { overflow: hidden; text-overflow: ellipsis; }
+}
 
 .tip {
   position: absolute; left: 0; top: 0;
@@ -596,8 +609,9 @@ h1 {
   }
   .stage { position: relative; top: auto; height: 100%; }
   .stage-tag { display: none; }
-  .viewbar { top: 10px; right: 12px; }
-  .viewbar button { padding: 5px 10px; }
+  /* One row of controls across the top: the view switch on the left, the journal on the right. */
+  .viewbar { top: 10px; left: 10px; right: auto; }
+  .viewbar button { height: 28px; padding: 0 11px; }
   .profile { left: 10px; right: 10px; bottom: 10px; height: 52px; border-radius: 10px; }
   .story { padding-inline: 20px; border-right: 0; }
   .intro { padding-block: 28px 8vh; }
@@ -873,7 +887,8 @@ h1 {
 .history .h-del:hover { color: var(--ink); text-decoration: underline; }
 
 @media (max-width: 900px) {
-  .journal-btn { top: 48px; right: 12px; padding: 5px 11px 5px 8px; }
+  .journal-btn { top: 10px; right: 10px; height: 36px; padding: 0 12px 0 9px; gap: 7px; font-size: 12px; }
+  .journal-btn svg { width: 15px; height: 15px; }
 }
 @media (max-width: 640px) {
   .portal { padding: 0; }

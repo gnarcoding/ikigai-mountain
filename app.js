@@ -921,22 +921,37 @@
 
   var labels = [];
   var hereLabel = null;
-  var tagBox = null;
+  // Controls that sit over the mountain. Labels fade rather than slide under them.
+  var obstacles = [];
   function measureTag() {
-    var t = document.querySelector(".stage-tag");
-    tagBox = t && t.offsetWidth ? { x: t.offsetLeft, y: t.offsetTop, w: t.offsetWidth, h: t.offsetHeight } : null;
+    var sr = stageEl.getBoundingClientRect();
+    obstacles = [".stage-tag", ".viewbar", ".journal-btn"].map(function (sel) {
+      var t = stageEl.querySelector(sel);
+      if (!t || !t.offsetWidth) return null;
+      var r = t.getBoundingClientRect();
+      return { x: r.left - sr.left, y: r.top - sr.top, w: r.width, h: r.height };
+    }).filter(Boolean);
   }
   function overTag(x, y, w, h) {
-    if (!tagBox) return false;
-    return x - w / 2 < tagBox.x + tagBox.w + 6 && x + w / 2 > tagBox.x - 6 && y - h / 2 < tagBox.y + tagBox.h + 6 && y + h / 2 > tagBox.y - 6;
+    for (var i = 0; i < obstacles.length; i++) {
+      var b = obstacles[i];
+      if (x - w / 2 < b.x + b.w + 6 && x + w / 2 > b.x - 6 && y - h / 2 < b.y + b.h + 6 && y + h / 2 > b.y - 6) return true;
+    }
+    return false;
   }
-  function measureLabels() { labels.forEach(function (L) { L.w = L.el.offsetWidth; L.h = L.el.offsetHeight; }); if (hereLabel) hereLabel.w = hereLabel.el.offsetWidth; measureTag(); }
+  function measureLabels() {
+    labels.forEach(function (L) { L.w = L.el.offsetWidth; L.h = L.el.offsetHeight; });
+    if (hereLabel) { hereLabel.w = hereLabel.el.offsetWidth; hereLabel.h = hereLabel.el.offsetHeight; }
+    measureTag();
+  }
+  // When two labels land on each other, the more important one stays.
+  var LABEL_RANK = { "lbl-here": 4, "lbl-summit": 3, "lbl-side": 2, "lbl-zone": 1 };
   function addLabel(html, cls, u, v, lift, always) {
     var el = document.createElement("div");
     el.className = "lbl " + cls;
     el.innerHTML = html;
     labelsEl.appendChild(el);
-    var L = { el: el, w: 0, pos: hasGL ? new THREE.Vector3(u, worldY(u, v) + lift, -v) : null, dir: { x: u, z: -v }, always: !!always };
+    var L = { el: el, w: 0, h: 0, rank: LABEL_RANK[cls] || 0, show: 1, pos: hasGL ? new THREE.Vector3(u, worldY(u, v) + lift, -v) : null, dir: { x: u, z: -v }, always: !!always };
     var len = Math.hypot(u, v) || 1; L.dir.x /= len; L.dir.z /= len;
     labels.push(L);
     return L;
@@ -944,7 +959,8 @@
   if (hasGL) {
     SIDES.forEach(function (s) {
       var a = s.ang * Math.PI / 180, r = 1.56;
-      addLabel('<i style="--c: var(' + s.css + ')"></i><span class="foil-text">' + s.name + '</span>', "lbl-side", r * Math.cos(a), r * Math.sin(a), 0.05);
+      // Phones show the short name ("Paid for") so four pills fit round the mountain.
+      addLabel('<i style="--c: var(' + s.css + ')"></i><span class="foil-text"><span class="nm-full">' + s.name + '</span><span class="nm-short">' + s.short + '</span></span>', "lbl-side", r * Math.cos(a), r * Math.sin(a), 0.05);
     });
     Object.keys(RIDGES).forEach(function (key) {
       var z = RIDGES[key], a = z.ang * Math.PI / 180, r = 1.0;
@@ -955,7 +971,7 @@
     hereEl.className = "lbl lbl-here";
     hereEl.style.opacity = 0;
     labelsEl.appendChild(hereEl);
-    hereLabel = { el: hereEl, w: 0 };
+    hereLabel = { el: hereEl, w: 0, h: 0, rank: LABEL_RANK["lbl-here"], show: 1 };
   }
 
   /* ------------------------------------------------------------------ */
@@ -985,6 +1001,9 @@
   document.getElementById("viewAbove").addEventListener("click", function () { viewOverride = "above"; setViewButtons(); });
 
   var profileH = 0;
+  // On phones the mountain is framed in the clear band between the control
+  // row at the top and the elevation strip at the bottom.
+  var bandTop = 0, bandBottom = 1, bandRatio = 1;
   function resize() {
     if (!hasGL) return;
     var rect = stageEl.getBoundingClientRect();
@@ -992,8 +1011,19 @@
     aspect = width / height;
     renderer.setSize(width, height, false);
     camera.aspect = aspect;
-    profileH = document.getElementById("profile").getBoundingClientRect().height + 20;
-    camera.setViewOffset(width, height, 0, profileH * 0.42, width, height);
+    var pr = document.getElementById("profile").getBoundingClientRect();
+    profileH = pr.height + 20;
+    var bar = stageEl.querySelector(".viewbar");
+    if (isNarrow() && bar) {
+      var topR = bar.getBoundingClientRect().bottom - rect.top + 6;
+      var botR = rect.bottom - pr.top + 6;
+      bandTop = topR; bandBottom = height - botR;
+      bandRatio = height / Math.max(120, bandBottom - bandTop);
+      camera.setViewOffset(width, height, 0, (botR - topR) / 2, width, height);
+    } else {
+      bandTop = 0; bandBottom = height; bandRatio = 1;
+      camera.setViewOffset(width, height, 0, profileH * 0.42, width, height);
+    }
     camera.updateProjectionMatrix();
     measureLabels();
     drawProfile();
@@ -1001,7 +1031,10 @@
   }
 
   function applyCamera() {
-    var fit = Math.max(1, 0.96 / aspect);
+    // Seen from the side the mountain is wider than tall, so it can fill more
+    // of the band; from above it's a full circle and needs the whole height.
+    var topView = 1 - smooth(0.15, 0.6, cam.phi);
+    var fit = Math.max(1, 0.96 / aspect) * (1 + (bandRatio - 1) * (0.5 + 0.35 * topView));
     var r = cam.radius * fit;
     var sp = Math.sin(cam.phi);
     camera.position.set(r * sp * Math.sin(cam.theta), cam.ty + r * Math.cos(cam.phi), r * sp * Math.cos(cam.theta));
@@ -1227,6 +1260,7 @@
         if (sec.kind === "stop" && sec.stop.kind !== "summit") {
           hereLabel.el.innerHTML = '<b style="--c: ' + sec.stop.hex + '">' + sec.stop.n + '</b><span class="foil-text">' + esc(sec.stop.data.title) + '</span>';
           hereLabel.w = hereLabel.el.offsetWidth;
+          hereLabel.h = hereLabel.el.offsetHeight;
           hereLabel.stop = sec.stop;
         } else {
           hereLabel.stop = null;
@@ -1388,32 +1422,70 @@
     return arc;
   }
 
+  var placed = [], labelOrder = [];
+  function collides(x, y, w, h, pad) {
+    for (var k = 0; k < placed.length; k++) {
+      var b = placed[k];
+      if (Math.abs(x - b.x) * 2 < w + (b.w || 0) + pad * 2 && Math.abs(y - b.y) * 2 < h + (b.h || 22) + pad * 2) return true;
+    }
+    return false;
+  }
+
   function updateLabels() {
     var cx = camera.position.x, cz = camera.position.z, cl = Math.hypot(cx, cz) || 1;
     cx /= cl; cz /= cl;
     var topness = 1 - smooth(0.15, 0.6, cam.phi);
+    // Phones keep every label inside the band between the controls and the strip.
+    var narrow = isNarrow();
+    var yMin = narrow ? bandTop : 0, yMax = narrow ? bandBottom : height;
+    labelOrder.length = 0;
     for (var i = 0; i < labels.length; i++) {
       var L = labels[i];
-      v3.copy(L.pos).project(camera);
+      L.op = 0;
+      v3.copy(L.pos);
+      // From above on a phone the side names move out to the rim, clear of the summit.
+      if (narrow && L.rank === LABEL_RANK["lbl-side"]) { var rim = 1 + 0.32 * topness; v3.x *= rim; v3.z *= rim; }
+      v3.project(camera);
       if (v3.z > 1) { L.el.style.opacity = 0; continue; }
       var x = (v3.x * 0.5 + 0.5) * width, y = (-v3.y * 0.5 + 0.5) * height;
       var half = (L.w || 0) / 2 + 8;
       x = clamp(x, half, Math.max(half, width - half));
+      if (narrow) { var vh = (L.h || 22) / 2 + 2; y = clamp(y, yMin + vh, Math.max(yMin + vh, yMax - vh)); }
       var face = L.always ? 1 : clamp((L.dir.x * cx + L.dir.z * cz + 0.3) / 0.55, 0, 1);
       var op = Math.max(face, topness);
       if (overTag(x, y, L.w || 0, L.h || 22)) op *= 0.1;
-      L.el.style.opacity = op.toFixed(3);
-      L.el.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) translate(-50%,-50%)";
+      L.x = x; L.y = y; L.op = op;
+      labelOrder.push(L);
     }
     if (hereLabel) {
-      var st = hereLabel.stop;
-      if (!st || !st.top) { hereLabel.el.style.opacity = 0; return; }
-      v3.copy(st.top).project(camera);
-      var hx = (v3.x * 0.5 + 0.5) * width, hy = (-v3.y * 0.5 + 0.5) * height;
-      var hh = (hereLabel.w || 0) / 2 + 8;
-      hx = clamp(hx, hh, Math.max(hh, width - hh));
-      hereLabel.el.style.opacity = v3.z > 1 ? 0 : 1;
-      hereLabel.el.style.transform = "translate(" + hx.toFixed(1) + "px," + hy.toFixed(1) + "px) translate(-50%,-150%)";
+      var H = hereLabel, st = H.stop;
+      H.op = 0;
+      if (st && st.top) {
+        v3.copy(st.top).project(camera);
+        if (v3.z <= 1) {
+          var hw = (H.w || 0) / 2 + 8, hh = (H.h || 28);
+          H.x = clamp((v3.x * 0.5 + 0.5) * width, hw, Math.max(hw, width - hw));
+          // Sits just above the stop it names.
+          H.y = (-v3.y * 0.5 + 0.5) * height - hh;
+          if (narrow) H.y = clamp(H.y, yMin + hh / 2 + 2, Math.max(yMin + hh / 2 + 2, yMax - hh / 2 - 2));
+          H.op = 1;
+          labelOrder.push(H);
+        }
+      }
+      if (!H.op) H.el.style.opacity = 0;
+    }
+    // Most important first; a label that lands on one already placed fades out.
+    // Faint labels on the far side go last and never push a clear one away.
+    labelOrder.sort(function (a, b) { return ((b.op > 0.25) - (a.op > 0.25)) || (b.rank - a.rank) || (b.op - a.op); });
+    placed.length = 0;
+    for (var j = 0; j < labelOrder.length; j++) {
+      var M = labelOrder[j], want = 1;
+      if (collides(M.x, M.y, M.w || 0, M.h || 22, M.show < 0.5 ? 4 : 1)) want = 0;
+      else if (M.op > 0.25) placed.push(M);
+      M.show = reduceMotion ? want : M.show + (want - M.show) * 0.2;
+      if (Math.abs(want - M.show) < 0.01) M.show = want;
+      M.el.style.opacity = (M.op * M.show).toFixed(3);
+      M.el.style.transform = "translate(" + M.x.toFixed(1) + "px," + M.y.toFixed(1) + "px) translate(-50%,-50%)";
     }
   }
 

@@ -1231,6 +1231,7 @@
           hereLabel.stop = null;
         }
       }
+      maybeNudge();
     }
   }
 
@@ -2408,6 +2409,59 @@
     }
     finish(quickReading(), "browser");
   }
+
+  /* ------------------------------------------------------------------ */
+  /* A gentle nudge toward booking a call                                */
+  /* ------------------------------------------------------------------ */
+
+  // Shows once, after the visitor has read a couple of stops and spent a
+  // little time on the page. "Maybe later" or a click through to /book keeps
+  // it away for two weeks. It steps aside at the end of the trail, which has
+  // its own booking card, and never covers the journal.
+  var NUDGE_KEY = "ikigai-mountain:nudge-quiet-until";
+  var NUDGE_QUIET_MS = 14 * 24 * 60 * 60 * 1000;
+  var NUDGE_MIN_STOP = 2;
+  var NUDGE_MIN_MS = 10000;
+  var nudgeEl = document.getElementById("nudge");
+  var nudgeState = { shown: false, done: false, loadedAt: performance.now() };
+
+  function nudgeIsQuiet() {
+    try { return Number(localStorage.getItem(NUDGE_KEY) || 0) > Date.now(); } catch (e) { return false; }
+  }
+  function nudgeQuiet() {
+    try { localStorage.setItem(NUDGE_KEY, String(Date.now() + NUDGE_QUIET_MS)); } catch (e) { /* stays quiet for this visit */ }
+  }
+  function showNudge() {
+    if (!nudgeEl || nudgeState.shown || nudgeState.done || nudgeIsQuiet()) return;
+    nudgeState.shown = true;
+    nudgeEl.hidden = false;
+    requestAnimationFrame(function () { requestAnimationFrame(function () { nudgeEl.classList.add("in"); }); });
+  }
+  function hideNudge() {
+    if (!nudgeEl || nudgeState.done) return;
+    nudgeState.done = true;
+    nudgeEl.classList.remove("in");
+    setTimeout(function () { nudgeEl.hidden = true; }, reduceMotion ? 0 : 320);
+  }
+  function maybeNudge() {
+    if (!nudgeEl || nudgeState.done) return;
+    var sec = sections[activeSec];
+    if (!sec) return;
+    if (sec.kind === "outro") { if (nudgeState.shown) hideNudge(); return; }
+    if (sec.kind !== "stop" || sec.stop.n < NUDGE_MIN_STOP) return;
+    if (!portalEl.hidden) return;
+    var wait = NUDGE_MIN_MS - (performance.now() - nudgeState.loadedAt);
+    if (wait > 0) { setTimeout(maybeNudge, wait + 50); return; }
+    showNudge();
+  }
+  if (nudgeEl) {
+    document.getElementById("nudgeLater").addEventListener("click", function () { nudgeQuiet(); hideNudge(); });
+  }
+  // Anyone who heads to the booking page from anywhere here has seen the offer.
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest('a[href="/book"]');
+    if (a) nudgeQuiet();
+  });
 
   /* ------------------------------------------------------------------ */
   /* Boot                                                                */

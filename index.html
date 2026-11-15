@@ -907,6 +907,68 @@ h1 {
 a.cta, a.ghost { display: inline-block; text-decoration: none; }
 a.ghost { color: var(--ink); }
 a.cta:focus-visible, a.ghost:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* ---------- Booking nudge ---------- */
+/* Sits over the mountain, just above the elevation strip, so it never covers what you're reading. */
+.nudge {
+  position: fixed;
+  right: 24px;
+  bottom: calc(136px + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+  width: min(340px, calc(100vw - 32px));
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px 16px 14px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 12px 32px rgba(10, 14, 24, 0.18);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .32s ease, transform .32s ease;
+}
+.nudge.in { opacity: 1; transform: none; }
+.nudge-mark { width: 34px; height: 34px; margin-top: 2px; }
+.nudge-body { min-width: 0; }
+.nudge-title { margin: 0 0 2px; font-family: var(--font-display); font-weight: 700; font-size: 17px; line-height: 1.3; }
+.nudge-text { margin: 0 0 10px; font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); }
+.nudge-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.nudge-book {
+  display: inline-block;
+  padding: 7px 15px;
+  border-radius: 999px;
+  background: var(--solid);
+  color: var(--solid-fg);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.nudge-later {
+  border: 0;
+  background: none;
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.nudge-later:hover { color: var(--ink); }
+.nudge-book:focus-visible, .nudge-later:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+@media (max-width: 900px) {
+  .nudge {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nudge { transition: none; transform: none; }
+}
 .nojs { margin: 0 0 24px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; }
 
 </style>
@@ -999,6 +1061,24 @@ a.cta:focus-visible, a.ghost:focus-visible { outline: 2px solid var(--ink); outl
     </section>
   </main>
 </div>
+
+<aside class="nudge" id="nudge" hidden aria-labelledby="nudgeTitle">
+  <svg class="nudge-mark" viewBox="0 0 64 64" aria-hidden="true">
+    <path d="M32 7 L3 57 H17.5 Z" fill="#da5762"/>
+    <path d="M32 7 L17.5 57 H32 Z" fill="#e9a034"/>
+    <path d="M32 7 L32 57 H46.5 Z" fill="#2580c1"/>
+    <path d="M32 7 L46.5 57 H61 Z" fill="#3fa362"/>
+    <path d="M32 7 L23.2 22.2 L27.5 20 L32 23.5 L36.5 20 L40.8 22.2 Z" fill="#f6f3ec"/>
+  </svg>
+  <div class="nudge-body">
+    <p class="nudge-title" id="nudgeTitle">Got a project in mind?</p>
+    <p class="nudge-text">Let's get on a call, talk it through and plan how to build it. One hour, one on one, $100.</p>
+    <div class="nudge-actions">
+      <a class="nudge-book" href="/book">Book a call</a>
+      <button type="button" class="nudge-later" id="nudgeLater">Maybe later</button>
+    </div>
+  </div>
+</aside>
 
 <div class="portal" id="portal" hidden role="dialog" aria-modal="true" aria-labelledby="portalTitle">
   <div class="portal-panel">

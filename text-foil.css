@@ -1,0 +1,76 @@
+/* Foil is clipped to glyphs; label cards, dots and the mountain keep their paint. */
+:root {
+  --foil-x: 50%;
+  --foil-y: 50%;
+  --foil-angle: 115deg;
+  --foil-colors: #263a72, #6f287c, #a33a55, #77541b, #17695e, #285e91, #263a72;
+  --foil-glint: rgba(255, 255, 255, 0.38);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --foil-colors: #b5d7ff, #e9baff, #ffc7db, #ffe3a5, #a0eedb, #b5d7ff, #e9baff;
+    --foil-glint: #fff;
+  }
+}
+:root[data-theme="dark"] {
+  --foil-colors: #b5d7ff, #e9baff, #ffc7db, #ffe3a5, #a0eedb, #b5d7ff, #e9baff;
+  --foil-glint: #fff;
+}
+
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .foil-text {
+    background-image:
+      linear-gradient(var(--foil-angle), transparent 39%, var(--foil-glint) 49%, transparent 59%),
+      repeating-linear-gradient(125deg, transparent 0 2px, rgba(255, 255, 255, 0.12) 2px 3px, transparent 3px 5px),
+      linear-gradient(var(--foil-angle), var(--foil-colors));
+    background-size: 250% 250%, 100% 100%, 240% 240%;
+    background-position: var(--foil-x) var(--foil-y), center, var(--foil-x) var(--foil-y);
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    /* Text shadows paint over clipped text in some browsers. */
+    text-shadow: none;
+  }
+  .lbl-zone .foil-text {
+    --foil-colors: #c9e7ff, #edcfff, #ffd7e9, #fff0c5, #c3ffe9, #c9e7ff, #edcfff;
+    --foil-glint: #fff;
+    filter: drop-shadow(0 1px 1px rgba(10, 14, 24, 0.85));
+  }
+  /* This label uses the inverse theme for its solid background. */
+  .lbl-here .foil-text {
+    --foil-colors: #b5d7ff, #e9baff, #ffc7db, #ffe3a5, #a0eedb, #b5d7ff, #e9baff;
+  }
+  :root[data-theme="dark"] .lbl-here .foil-text {
+    --foil-colors: #263a72, #6f287c, #a33a55, #77541b, #17695e, #285e91, #263a72;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .lbl-here .foil-text {
+      --foil-colors: #263a72, #6f287c, #a33a55, #77541b, #17695e, #285e91, #263a72;
+    }
+  }
+}
+
+.foil-controls { margin: -2px 0 16px; font-size: 12px; color: var(--ink-soft); }
+.foil-controls[hidden], .foil-controls [hidden] { display: none; }
+.foil-enable {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--chip);
+  cursor: pointer;
+}
+.foil-enable:hover { background: var(--chip-hover); }
+.foil-status { display: block; margin-top: 4px; }
+.foil-status:empty { display: none; }
+
+@media (forced-colors: active), print {
+  .foil-text {
+    background: none;
+    color: inherit;
+    -webkit-text-fill-color: currentColor;
+    filter: none !important;
+  }
+  .foil-controls { display: none; }
+}

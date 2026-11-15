@@ -831,7 +831,7 @@
       return '<li class="stop" id="stop-' + st.n + '" style="--c: ' + st.cssColor + '">' +
         '<span class="dot" aria-hidden="true"></span>' +
         '<p class="stop-kicker">Stop ' + st.n + " of " + total + " · " + esc(st.place) + "</p>" +
-        '<h2 class="stop-title">' + esc(d.title) + "</h2>" +
+        '<h2 class="stop-title foil-text">' + esc(d.title) + "</h2>" +
         '<p class="where">' + heldHtml(st.mask) + "<span>Standing in <b>" + esc(ZONES[st.mask]) + "</b> · " + esc(zoneWords(st.mask)) + "</span></p>" +
         '<p class="feels">' + esc(d.feels) + "</p>" +
         '<figure class="voice"><figcaption>' + esc(d.voiceLabel || "The voice that keeps you here") + "</figcaption><blockquote>“" + esc(d.voice) + "”</blockquote></figure>" +
@@ -944,13 +944,13 @@
   if (hasGL) {
     SIDES.forEach(function (s) {
       var a = s.ang * Math.PI / 180, r = 1.56;
-      addLabel('<i style="--c: var(' + s.css + ')"></i>' + s.name, "lbl-side", r * Math.cos(a), r * Math.sin(a), 0.05);
+      addLabel('<i style="--c: var(' + s.css + ')"></i><span class="foil-text">' + s.name + '</span>', "lbl-side", r * Math.cos(a), r * Math.sin(a), 0.05);
     });
     Object.keys(RIDGES).forEach(function (key) {
       var z = RIDGES[key], a = z.ang * Math.PI / 180, r = 1.0;
-      addLabel(z.name, "lbl-zone", r * Math.cos(a), r * Math.sin(a), 0.03);
+      addLabel('<span class="foil-text">' + z.name + '</span>', "lbl-zone", r * Math.cos(a), r * Math.sin(a), 0.03);
     });
-    addLabel('<span lang="ja">生き甲斐</span> · Ikigai', "lbl-summit", 0, 0, 0.17, true);
+    addLabel('<span class="foil-text"><span lang="ja">生き甲斐</span> · Ikigai</span>', "lbl-summit", 0, 0, 0.17, true);
     var hereEl = document.createElement("div");
     hereEl.className = "lbl lbl-here";
     hereEl.style.opacity = 0;
@@ -1225,7 +1225,7 @@
       nextBtn.disabled = act === sections.length - 1;
       if (hereLabel) {
         if (sec.kind === "stop" && sec.stop.kind !== "summit") {
-          hereLabel.el.innerHTML = '<b style="--c: ' + sec.stop.hex + '">' + sec.stop.n + "</b>" + esc(sec.stop.data.title);
+          hereLabel.el.innerHTML = '<b style="--c: ' + sec.stop.hex + '">' + sec.stop.n + '</b><span class="foil-text">' + esc(sec.stop.data.title) + '</span>';
           hereLabel.w = hereLabel.el.offsetWidth;
           hereLabel.stop = sec.stop;
         } else {

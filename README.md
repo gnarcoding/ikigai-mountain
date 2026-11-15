@@ -15,6 +15,23 @@ The homepage of [gnarcoding.com](https://gnarcoding.com): the four circles of ik
 
 There is no build step. Edit the files and deploy the folder as it is.
 
+## Holographic text
+
+`text-foil.css` gives the title, trail headings and projected mountain labels a
+foil finish clipped to the letters. `text-foil.js` moves the light with the mouse
+or touch, and with phone tilt on supported HTTPS browsers. On browsers that
+require motion permission (including iOS Safari), use **Enable tilt shimmer**.
+If permission or sensor data is unavailable, touch-and-drag still works.
+
+Tilt calibrates to the initial holding angle and recalibrates when screen
+orientation changes. Reduced-motion preferences keep the foil static; hidden
+pages stop sensor updates. No sensor readings are stored or transmitted.
+
+Run the motion/permission regression checks with `node --test tests/text-foil.test.cjs`.
+For a device smoke test, open the site over HTTPS on Android Chrome and iOS Safari,
+tilt left/right and forward/back, then rotate to landscape. On iOS, also check
+permission denial. Dragging the mountain and scrolling should still work normally.
+
 ## Privacy
 
 The Trail Journal saves answers and readings in the visitor's own browser (`localStorage`, keys starting with `ikigai-mountain:`). Nothing is sent to a server, and the mountain page loads nothing from third parties: fonts and three.js are served from this site. The Content Security Policy in `vercel.json` enforces that (`default-src 'self'`).

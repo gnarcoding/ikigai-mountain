@@ -1084,6 +1084,7 @@ body.has-player .story { padding-bottom: 150px; }
 .nojs { margin: 0 0 24px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; }
 
 </style>
+<link rel="stylesheet" href="text-foil.css">
 </head>
 <body>
 <div class="layout">
@@ -1093,7 +1094,7 @@ body.has-player .story { padding-bottom: 150px; }
       <div class="labels" id="labels" aria-hidden="true"></div>
       <div class="stage-tag" aria-live="polite">
         <span class="tag-kicker" id="tagKicker">The whole trail</span>
-        <span class="tag-title" id="tagTitle">27 stops, 3 laps, 1 summit</span>
+        <span class="tag-title foil-text" id="tagTitle">27 stops, 3 laps, 1 summit</span>
         <div class="tag-nav">
           <button type="button" id="prevStop">↑ Previous</button>
           <button type="button" id="nextStop">Next stop ↓</button>
@@ -1116,7 +1117,11 @@ body.has-player .story { padding-bottom: 150px; }
     <section class="intro" id="intro">
       <noscript><p class="nojs">The mountain, the 27 stops and the Trail Journal need JavaScript. Turn it on to start the climb.</p></noscript>
       <p class="kanji" lang="ja">生き甲斐</p>
-      <h1>The Ikigai Mountain</h1>
+      <h1 class="foil-text">The Ikigai Mountain</h1>
+      <div class="foil-controls" id="foilControls" hidden>
+        <button type="button" class="foil-enable" id="foilEnable" aria-describedby="foilStatus">Enable tilt shimmer</button>
+        <span class="foil-status" id="foilStatus" role="status"></span>
+      </div>
       <p class="thesis">No one lands on the summit. You start at the foot of one side and circle all four, again and again, until the paths meet at the top.</p>
       <p class="lede" id="lede">This is the whole trail, stop by stop. Every stop is a place where real climbers get stuck. Scroll to walk it, and the climber on the mountain walks with you.</p>
 
@@ -1147,7 +1152,7 @@ body.has-player .story { padding-bottom: 150px; }
 
     <section class="outro" id="outro">
       <p class="label">Seen from above</p>
-      <h2>Every lap circled the same center</h2>
+      <h2 class="foil-text">Every lap circled the same center</h2>
       <p>Look down on the mountain and the four faces turn back into four circles. The trail you walked is a spiral through all of them, over and over. No one reaches the middle by standing still on one side, and no one skips the hard faces. You go around until the circles overlap under your feet.</p>
       <p class="note">The four-circle diagram is a modern Western take on the idea. In Japan, ikigai usually means something smaller and more everyday: whatever makes your days feel worth living.</p>
 
@@ -1233,5 +1238,6 @@ body.has-player .story { padding-bottom: 150px; }
 
 <script src="vendor/three.min.js" defer></script>
 <script src="app.js" defer></script>
+<script src="text-foil.js" defer></script>
 </body>
 </html>

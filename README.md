@@ -19,18 +19,27 @@ There is no build step. Edit the files and deploy the folder as it is.
 
 The Trail Journal saves answers and readings in the visitor's own browser (`localStorage`, keys starting with `ikigai-mountain:`). Nothing is sent to a server, and the page loads nothing from third parties: fonts and three.js are served from this site. The Content Security Policy in `vercel.json` enforces that (`default-src 'self'`).
 
-## Deploy on Vercel
+## Deployment
 
-**From GitHub (recommended).** In Vercel, choose Add New → Project, import this repository, leave Framework Preset as "Other" with no build command, and deploy. Every push to `main` then deploys automatically.
+The site is the Vercel project **ikigai-mountain** in gnarcoding's projects. Every push to `main` deploys to production automatically, with no build step. The project's own address is ikigai-mountain.vercel.app.
 
-**From the command line.** In this folder, run `npx vercel` once to link it, then `npx vercel --prod`.
+| Domain | Role |
+| --- | --- |
+| `gnarcoding.com` | Production |
+| `www.gnarcoding.com` | 308 permanent redirect to `gnarcoding.com` |
 
-## Point gnarcoding.com at Vercel
+## DNS at Namecheap
 
-1. In the Vercel project, go to Settings → Domains and add `gnarcoding.com` and `www.gnarcoding.com`. Vercel shows the exact DNS records it wants.
-2. In Namecheap, open Domain List → gnarcoding.com → Advanced DNS.
-3. Delete the parking records: the `@` record that points at Namecheap's parking or redirect address, and the `www` CNAME to `parkingpage.namecheap.com`.
-4. Add the records Vercel showed. They are usually an `A` record for `@` pointing to `76.76.21.21` and a `CNAME` for `www` pointing to `cname.vercel-dns.com`.
-5. Leave the Zoho mail records (`MX` and the `TXT` SPF record) as they are, or email stops working.
+These are the host records for gnarcoding.com (Domain List → gnarcoding.com → Advanced DNS), as set up for Vercel on November 15, 2026.
 
-Vercel issues the HTTPS certificate once DNS has updated, usually within an hour.
+| Type | Host | Value | Purpose |
+| --- | --- | --- | --- |
+| A | `@` | `216.198.79.1` | Vercel |
+| CNAME | `www` | `92dae6e8f1fe873d.vercel-dns-017.com.` | Vercel |
+| TXT | `@` | `v=spf1 include:zohomail.com ~all` | Zoho mail (SPF) |
+| TXT | `zoho._domainkey` | Zoho DKIM key | Zoho mail (DKIM) |
+| MX | `@` | `mx.zoho.com` (10), `mx2.zoho.com` (20), `mx3.zoho.com` (10) | Zoho mail |
+
+Leave the Zoho records as they are, or email to gnarcoding.com stops working. If Vercel ever asks for different values, its project Settings → Domains page shows the current ones.
+
+Before this change, `@` was a Namecheap URL redirect to `http://www.gnarcoding.com/` and `www` was a CNAME to `parkingpage.namecheap.com.` (the parking page).

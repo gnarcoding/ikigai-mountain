@@ -5,6 +5,168 @@
       "hash": "891bba9c31de783b",
       "bytes": 756445,
       "seconds": 63
+    },
+    "intro": {
+      "file": "intro.mp3",
+      "hash": "b6cef915dbafcd97",
+      "bytes": 773686,
+      "seconds": 64.5
+    },
+    "passion-1": {
+      "file": "passion-1.mp3",
+      "hash": "401153d89c8fb757",
+      "bytes": 776507,
+      "seconds": 64.7
+    },
+    "good-1": {
+      "file": "good-1.mp3",
+      "hash": "83e4b9e762729d84",
+      "bytes": 902522,
+      "seconds": 75.2
+    },
+    "profession-1": {
+      "file": "profession-1.mp3",
+      "hash": "7b69d08064a9baa5",
+      "bytes": 795942,
+      "seconds": 66.3
+    },
+    "paid-1": {
+      "file": "paid-1.mp3",
+      "hash": "0310a942f3ff7db7",
+      "bytes": 815064,
+      "seconds": 67.9
+    },
+    "vocation-1": {
+      "file": "vocation-1.mp3",
+      "hash": "08171558ae28d5ef",
+      "bytes": 843903,
+      "seconds": 70.3
+    },
+    "needs-1": {
+      "file": "needs-1.mp3",
+      "hash": "702d177cf8a42f4c",
+      "bytes": 866159,
+      "seconds": 72.2
+    },
+    "mission-1": {
+      "file": "mission-1.mp3",
+      "hash": "7f0a22c92ea81c13",
+      "bytes": 768044,
+      "seconds": 64
+    },
+    "love-1": {
+      "file": "love-1.mp3",
+      "hash": "bc26c5ff5ad924f5",
+      "bytes": 817258,
+      "seconds": 68.1
+    },
+    "passion-2": {
+      "file": "passion-2.mp3",
+      "hash": "971b30c8f4d2a44e",
+      "bytes": 805660,
+      "seconds": 67.1
+    },
+    "good-2": {
+      "file": "good-2.mp3",
+      "hash": "af1a314f7e565b57",
+      "bytes": 899701,
+      "seconds": 75
+    },
+    "profession-2": {
+      "file": "profession-2.mp3",
+      "hash": "f82d175915fdd73c",
+      "bytes": 763028,
+      "seconds": 63.6
+    },
+    "paid-2": {
+      "file": "paid-2.mp3",
+      "hash": "058b082b7f94efd2",
+      "bytes": 784971,
+      "seconds": 65.4
+    },
+    "vocation-2": {
+      "file": "vocation-2.mp3",
+      "hash": "1dc4df8acccd0f6a",
+      "bytes": 810048,
+      "seconds": 67.5
+    },
+    "needs-2": {
+      "file": "needs-2.mp3",
+      "hash": "30e4981bfd10a186",
+      "bytes": 800644,
+      "seconds": 66.7
+    },
+    "mission-2": {
+      "file": "mission-2.mp3",
+      "hash": "b72c305d4a7f9cd9",
+      "bytes": 782150,
+      "seconds": 65.2
+    },
+    "love-2": {
+      "file": "love-2.mp3",
+      "hash": "317da1201c116bc8",
+      "bytes": 936377,
+      "seconds": 78
+    },
+    "passion-3": {
+      "file": "passion-3.mp3",
+      "hash": "0f8c7ae9a423fd37",
+      "bytes": 815691,
+      "seconds": 68
+    },
+    "good-3": {
+      "file": "good-3.mp3",
+      "hash": "1cecbde47fa3fba0",
+      "bytes": 899701,
+      "seconds": 75
+    },
+    "profession-3": {
+      "file": "profession-3.mp3",
+      "hash": "6cf065833745a822",
+      "bytes": 828857,
+      "seconds": 69.1
+    },
+    "paid-3": {
+      "file": "paid-3.mp3",
+      "hash": "0463012cfed50811",
+      "bytes": 874623,
+      "seconds": 72.9
+    },
+    "vocation-3": {
+      "file": "vocation-3.mp3",
+      "hash": "52be0820b9a23ee9",
+      "bytes": 898133,
+      "seconds": 74.8
+    },
+    "needs-3": {
+      "file": "needs-3.mp3",
+      "hash": "83c7a60b292b6434",
+      "bytes": 867413,
+      "seconds": 72.3
+    },
+    "mission-3": {
+      "file": "mission-3.mp3",
+      "hash": "787b5b062b68ba4b",
+      "bytes": 785598,
+      "seconds": 65.5
+    },
+    "love-3": {
+      "file": "love-3.mp3",
+      "hash": "55b1c80fb17d3118",
+      "bytes": 924778,
+      "seconds": 77.1
+    },
+    "false-summit": {
+      "file": "false-summit.mp3",
+      "hash": "ccbf84d4bbfe2827",
+      "bytes": 843276,
+      "seconds": 70.3
+    },
+    "summit": {
+      "file": "summit.mp3",
+      "hash": "c26bb8f1d8965585",
+      "bytes": 822274,
+      "seconds": 68.5
     }
   },
   "voice": "Lily",

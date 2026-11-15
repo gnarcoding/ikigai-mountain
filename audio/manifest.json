@@ -1,0 +1,12 @@
+{
+  "sections": {
+    "trailhead-love": {
+      "file": "trailhead-love.mp3",
+      "hash": "891bba9c31de783b",
+      "bytes": 756445,
+      "seconds": 63
+    }
+  },
+  "voice": "Lily",
+  "model": "eleven_multilingual_v2"
+}

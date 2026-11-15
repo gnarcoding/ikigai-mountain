@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Book an Hour · gnarcoding</title>
+<meta name="description" content="Book a one-on-one hour for $100: direction on the ikigai mountain, code, or security. Pick a time and pay by card to confirm.">
+<link rel="canonical" href="https://gnarcoding.com/book">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#f3f5f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1420" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="gnarcoding.com">
+<meta property="og:url" content="https://gnarcoding.com/book">
+<meta property="og:title" content="Book an Hour">
+<meta property="og:description" content="Book a one-on-one hour for $100: direction on the ikigai mountain, code, or security. Pick a time and pay by card to confirm.">
+<meta property="og:image" content="https://gnarcoding.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="/fonts/shippori-mincho-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/zen-kaku-gothic-new-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preconnect" href="https://app.cal.com">
+<style>
+@font-face {
+  font-family: "Shippori Mincho";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/shippori-mincho-latin-500-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "Shippori Mincho";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/shippori-mincho-latin-700-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "Zen Kaku Gothic New";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/zen-kaku-gothic-new-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "Zen Kaku Gothic New";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/zen-kaku-gothic-new-latin-500-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "Zen Kaku Gothic New";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/zen-kaku-gothic-new-latin-700-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+:root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+
+:root {
+  --bg: #f3f5f8;
+  --sky-top: #c2cedd;
+  --sky-low: #e8edf2;
+  --fog: #e8edf2;
+  --ink: #1b2230;
+  --ink-soft: #586375;
+  --ink-faint: #8b94a3;
+  --line: rgba(27, 34, 48, 0.13);
+  --rail: #a3abb8;
+  --card: rgba(247, 249, 251, 0.86);
+  --field: #ffffff;
+  --chip: rgba(255, 255, 255, 0.6);
+  --chip-hover: rgba(255, 255, 255, 0.95);
+  --solid: #1b2230;
+  --solid-fg: #f3f5f8;
+  --tip-bg: #1b2230;
+  --tip-fg: #f3f5f8;
+  --summit: #b88a1c;
+  --exposure: 1;
+
+  --love: #da5762;
+  --good: #e9a034;
+  --needs: #2580c1;
+  --paid: #3fa362;
+
+  --font-display: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1420;
+    --sky-top: #050811;
+    --sky-low: #161d2b;
+    --fog: #161d2b;
+    --ink: #e7eaf0;
+    --ink-soft: #9aa3b4;
+    --ink-faint: #6c7586;
+    --line: rgba(231, 234, 240, 0.13);
+    --rail: #4b5466;
+    --card: rgba(13, 18, 29, 0.84);
+    --field: #161d2b;
+    --chip: rgba(255, 255, 255, 0.05);
+    --chip-hover: rgba(255, 255, 255, 0.12);
+    --solid: #e7eaf0;
+    --solid-fg: #0d121d;
+    --tip-bg: #f3f5f8;
+    --tip-fg: #1b2230;
+    --summit: #e2be62;
+    --exposure: 0.9;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1420;
+  --sky-top: #050811;
+  --sky-low: #161d2b;
+  --fog: #161d2b;
+  --ink: #e7eaf0;
+  --ink-soft: #9aa3b4;
+  --ink-faint: #6c7586;
+  --line: rgba(231, 234, 240, 0.13);
+  --rail: #4b5466;
+  --card: rgba(13, 18, 29, 0.84);
+  --field: #161d2b;
+  --chip: rgba(255, 255, 255, 0.05);
+  --chip-hover: rgba(255, 255, 255, 0.12);
+  --solid: #e7eaf0;
+  --solid-fg: #0d121d;
+  --tip-bg: #f3f5f8;
+  --tip-fg: #1b2230;
+  --summit: #e2be62;
+  --exposure: 0.9;
+  color-scheme: dark;
+}
+
+/* Layout: details on the left, the live calendar on the right; one column on phones. */
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; }
+a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 44px;
+  border-bottom: 1px solid var(--line);
+}
+.back { font-weight: 700; font-size: 14px; text-decoration: none; }
+.back:hover { text-decoration: underline; text-underline-offset: 3px; }
+.topbrand { color: var(--ink-soft); font-size: 13px; letter-spacing: 0.02em; }
+
+.book {
+  display: grid;
+  grid-template-columns: minmax(0, 460px) minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+  padding: 48px 44px 56px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.details { min-width: 0; }
+.kicker, .label {
+  margin: 0 0 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+h1 {
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.thesis {
+  margin: 0 0 26px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 0 32px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.facts div { padding: 14px 0; }
+.facts div + div { padding-left: 16px; border-left: 1px solid var(--line); }
+.facts dt { font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+.facts dd { margin: 2px 0 0; font-family: var(--font-display); font-weight: 700; font-size: 24px; font-variant-numeric: tabular-nums; }
+
+.topics { list-style: none; margin: 0 0 30px; padding: 0; display: grid; gap: 16px; }
+.topics li { display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 12px; align-items: baseline; }
+.topics i { width: 12px; height: 12px; border-radius: 50%; background: var(--c); transform: translateY(1px); }
+.topics b { font-weight: 700; }
+.topics p { margin: 2px 0 0; color: var(--ink-soft); font-size: 14.5px; }
+
+.steps { margin: 0 0 26px; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 10px; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.steps li::before {
+  content: counter(s);
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--solid); color: var(--solid-fg);
+  font-size: 12px; font-weight: 700;
+  transform: translateY(-1px);
+}
+.policy { margin: 0 0 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; font-size: 14.5px; }
+.fine { margin: 0; color: var(--ink-soft); font-size: 13px; max-width: 52ch; }
+
+.calendar { min-width: 0; position: sticky; top: calc(24px + env(safe-area-inset-top, 0px)); }
+.cal-shell {
+  position: relative;
+  min-height: 640px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--field);
+  overflow: hidden;
+}
+.cal-inline { width: 100%; min-height: 640px; }
+.cal-status {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  margin: 0;
+  padding: 24px;
+  text-align: center;
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+.cal-status.is-error { pointer-events: auto; color: var(--ink); }
+.fallback { margin: 12px 0 0; color: var(--ink-soft); font-size: 13.5px; }
+.fallback a { color: var(--ink); font-weight: 700; text-underline-offset: 3px; }
+
+.book-foot {
+  display: grid;
+  gap: 4px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 18px 44px 40px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+.book-foot p { margin: 0; }
+.book-foot .brand { font-weight: 700; color: var(--ink); }
+.book-foot a { font-weight: 700; color: var(--ink); text-underline-offset: 3px; }
+
+@media (max-width: 900px) {
+  .topbar { padding: 14px 20px; }
+  .book { grid-template-columns: minmax(0, 1fr); gap: 32px; padding: 28px 20px 40px; }
+  .calendar { position: static; }
+  h1 { font-size: 34px; }
+  .thesis { font-size: 18px; }
+  .book-foot { padding: 18px 20px 32px; }
+}
+@media (max-width: 420px) {
+  .facts dd { font-size: 20px; }
+  .facts div + div { padding-left: 10px; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="/">← The Ikigai Mountain</a>
+  <span class="topbrand">gnarcoding.com</span>
+</header>
+
+<main class="book">
+  <section class="details" aria-labelledby="bookTitle">
+    <p class="kicker">One hour, one on one</p>
+    <h1 id="bookTitle">Book an hour</h1>
+    <p class="thesis">Sixty minutes on whatever you're stuck on: where you are on the mountain, a codebase, or a security problem.</p>
+
+    <dl class="facts">
+      <div><dt>Price</dt><dd>$100</dd></div>
+      <div><dt>Length</dt><dd>60 min</dd></div>
+      <div><dt>Where</dt><dd>Video call</dd></div>
+    </dl>
+
+    <h2 class="label">What we can work on</h2>
+    <ul class="topics">
+      <li style="--c: var(--summit)">
+        <i></i>
+        <div>
+          <b>Direction</b>
+          <p>Where you are on the mountain, which circle is slipping, and the next stop worth climbing toward. Bring your Trail Journal reading if you have one.</p>
+        </div>
+      </li>
+      <li style="--c: var(--good)">
+        <i></i>
+        <div>
+          <b>Code</b>
+          <p>A review, a bug you can't shake, an architecture decision, or a stalled project that needs to move again.</p>
+        </div>
+      </li>
+      <li style="--c: var(--needs)">
+        <i></i>
+        <div>
+          <b>Security</b>
+          <p>Questions about your setup or an app you're building, or how an attack actually works and what stops it.</p>
+        </div>
+      </li>
+    </ul>
+
+    <h2 class="label">How booking works</h2>
+    <ol class="steps">
+      <li>Pick a time that works for you.</li>
+      <li>Pay $100 by card to confirm it. Stripe handles the payment.</li>
+      <li>You get a confirmation email with the video call link.</li>
+    </ol>
+
+    <p class="policy"><b>Need to cancel?</b> Cancel or reschedule at least 24 hours before the call for a full refund.</p>
+    <p class="fine">The calendar and checkout are run by Cal.com and Stripe, so your card details never touch this site. Your Trail Journal still stays in your browser.</p>
+  </section>
+
+  <section class="calendar" aria-label="Pick a time">
+    <div class="cal-shell">
+      <div id="cal-inline" class="cal-inline"></div>
+      <p class="cal-status" id="calStatus">Loading available times…</p>
+    </div>
+    <p class="fallback">Calendar not showing? <a id="calLink" href="https://cal.com/" target="_blank" rel="noopener">Open the booking page</a></p>
+  </section>
+</main>
+
+<footer class="book-foot">
+  <p class="brand">gnarcoding.com</p>
+  <p><a href="/">The Ikigai Mountain</a></p>
+</footer>
+
+<script src="/book.js" defer></script>
+</body>
+</html>

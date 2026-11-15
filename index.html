@@ -903,6 +903,10 @@ h1 {
 }
 .site-foot p { margin: 0; max-width: 60ch; }
 .site-foot .brand { font-weight: 700; color: var(--ink); letter-spacing: 0.02em; }
+.site-foot a { color: var(--ink); font-weight: 700; text-underline-offset: 3px; }
+a.cta, a.ghost { display: inline-block; text-decoration: none; }
+a.ghost { color: var(--ink); }
+a.cta:focus-visible, a.ghost:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .nojs { margin: 0 0 24px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; }
 
 </style>
@@ -959,6 +963,7 @@ h1 {
         <button type="button" class="cta" id="begin">Start climbing ↓</button>
         <button type="button" class="ghost" data-open-journal>Find where you are</button>
         <button type="button" class="ghost" id="toIndex">See every stop</button>
+        <a class="ghost" href="/book">Book an hour</a>
       </div>
       <p class="last-reading" id="lastReading" hidden></p>
     </section>
@@ -977,12 +982,19 @@ h1 {
         <button type="button" class="cta" data-open-journal>Open the Trail Journal</button>
       </div>
 
+      <div class="outro-journal">
+        <h3>Want company on the climb?</h3>
+        <p>Book a one-on-one hour for $100. Bring a direction question, a codebase or a security problem, and your journal reading if you have one.</p>
+        <a class="cta" href="/book">Book an hour</a>
+      </div>
+
       <p class="label">The whole trail</p>
       <ol class="index" id="index"></ol>
 
       <footer class="site-foot">
         <p class="brand">gnarcoding.com</p>
         <p>Your Trail Journal stays in this browser. Nothing you write is sent anywhere, and clearing your browser data erases it.</p>
+        <p><a href="/book">Book an hour</a></p>
       </footer>
     </section>
   </main>

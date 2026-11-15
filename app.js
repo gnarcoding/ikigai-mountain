@@ -2159,7 +2159,8 @@
     again.addEventListener("click", runReading);
     var edit = el('<button type="button" class="ghost">Change my answers</button>');
     edit.addEventListener("click", function () { goStep(1); });
-    actions.append(again, edit);
+    var talk = el('<a class="ghost" href="/book">Talk it through: book an hour</a>');
+    actions.append(again, edit, talk);
     box.appendChild(actions);
     portalBody.appendChild(box);
   }

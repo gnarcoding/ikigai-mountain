@@ -1,0 +1,48 @@
+name: Narrate the trail
+
+# Records audio for any stop whose text, voice or settings changed, then
+# commits it. Vercel deploys that commit like any other.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - app.js
+      - narration.config.json
+      - scripts/narrate.mjs
+
+permissions:
+  contents: write
+
+concurrency:
+  group: narrate
+  cancel-in-progress: false
+
+jobs:
+  narrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Record new or changed stops
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+        run: node scripts/narrate.mjs
+
+      - name: Commit the audio
+        run: |
+          if [ -n "$(git status --porcelain -- audio)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add audio
+            git commit -m "Record narration for new or changed stops"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          else
+            echo "No audio changed."
+          fi

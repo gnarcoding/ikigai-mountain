@@ -862,6 +862,7 @@
     activeSec = -1;
     scrollDirty = true;
     applyYouBadges();
+    decorateStopsWithListen();
   }
 
   indexEl.addEventListener("click", function (e) {
@@ -2450,6 +2451,7 @@
     if (sec.kind === "outro") { if (nudgeState.shown) hideNudge(); return; }
     if (sec.kind !== "stop" || sec.stop.n < NUDGE_MIN_STOP) return;
     if (!portalEl.hidden) return;
+    if (playerEl && !playerEl.hidden) return;
     var wait = NUDGE_MIN_MS - (performance.now() - nudgeState.loadedAt);
     if (wait > 0) { setTimeout(maybeNudge, wait + 50); return; }
     showNudge();
@@ -2462,6 +2464,240 @@
     var a = e.target.closest && e.target.closest('a[href="/book"]');
     if (a) nudgeQuiet();
   });
+
+  /* ------------------------------------------------------------------ */
+  /* Read aloud                                                          */
+  /* ------------------------------------------------------------------ */
+
+  // Narration is recorded ahead of time (scripts/narrate.mjs) and listed in
+  // audio/manifest.json. Until that file exists, none of this shows.
+  var playerEl = document.getElementById("player");
+  var listenAllBtn = document.getElementById("listenAll");
+  var AUD = { manifest: null, el: null, currentId: null, seeking: false };
+  var RATES = [1, 1.25, 1.5, 0.75];
+  var PREF_RATE = "ikigai-mountain:listen-rate";
+  var PREF_AUTO = "ikigai-mountain:listen-autoplay";
+  function prefGet(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+  function prefSet(k, v) { try { localStorage.setItem(k, String(v)); } catch (e) { /* not saved */ } }
+  AUD.rate = Number(prefGet(PREF_RATE, "1")) || 1;
+  if (RATES.indexOf(AUD.rate) < 0) AUD.rate = 1;
+  AUD.auto = prefGet(PREF_AUTO, "1") !== "0";
+
+  var ICON = {
+    play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.6v14H7zM13.4 5H17v14h-3.6z"/></svg>'
+  };
+
+  function fmtTime(s) {
+    if (!isFinite(s) || s < 0) s = 0;
+    var m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return m + ":" + (sec < 10 ? "0" : "") + sec;
+  }
+  function audioIdFor(st) { return st.kind === "trailhead" ? "trailhead-" + SIDES[startIdx].key : st.id; }
+  function audioFor(st) { return AUD.manifest ? AUD.manifest.sections[audioIdFor(st)] || null : null; }
+  function stopByAudioId(id) {
+    for (var i = 0; i < stops.length; i++) if (audioIdFor(stops[i]) === id) return stops[i];
+    return null;
+  }
+  function neighbor(st, dir) {
+    for (var i = st.n - 1 + dir; i >= 0 && i < stops.length; i += dir) if (audioFor(stops[i])) return stops[i];
+    return null;
+  }
+  function isPlaying() { return !!(AUD.el && !AUD.el.paused && !AUD.el.ended); }
+
+  function decorateStopsWithListen() {
+    if (!AUD.manifest) return;
+    stops.forEach(function (st) {
+      var li = document.getElementById("stop-" + st.n);
+      if (!li) return;
+      var old = li.querySelector(".listen");
+      if (old) old.remove();
+      var a = audioFor(st);
+      if (!a) return;
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "listen";
+      b.dataset.audioId = audioIdFor(st);
+      b.innerHTML = '<span class="listen-ic"></span><span class="listen-label"></span><span class="listen-dur"></span>';
+      b.querySelector(".listen-dur").textContent = fmtTime(a.seconds);
+      b.addEventListener("click", function () {
+        var s = stopByAudioId(b.dataset.audioId);
+        if (!s) return;
+        if (AUD.currentId === b.dataset.audioId && isPlaying()) AUD.el.pause();
+        else playStop(s);
+      });
+      li.querySelector(".stop-title").after(b);
+    });
+    syncListenUi();
+  }
+
+  function syncListenUi() {
+    var playing = isPlaying();
+    Array.prototype.forEach.call(document.querySelectorAll(".listen"), function (b) {
+      var on = b.dataset.audioId === AUD.currentId && playerEl && !playerEl.hidden;
+      var live = on && playing;
+      b.classList.toggle("on", on);
+      b.querySelector(".listen-ic").innerHTML = live ? ICON.pause : ICON.play;
+      b.querySelector(".listen-label").textContent = live ? "Pause" : on ? "Resume" : "Listen";
+      b.setAttribute("aria-label", (live ? "Pause" : on ? "Resume" : "Listen to") + " this stop");
+    });
+    if (!playerEl) return;
+    var pb = document.getElementById("plPlay");
+    pb.innerHTML = playing ? ICON.pause : ICON.play;
+    pb.setAttribute("aria-label", playing ? "Pause" : "Play");
+    if ("mediaSession" in navigator) navigator.mediaSession.playbackState = playing ? "playing" : "paused";
+  }
+
+  function ensureAudio() {
+    if (AUD.el) return AUD.el;
+    var el = new Audio();
+    el.preload = "metadata";
+    el.addEventListener("play", syncListenUi);
+    el.addEventListener("pause", syncListenUi);
+    el.addEventListener("loadedmetadata", function () {
+      el.playbackRate = AUD.rate;
+      document.getElementById("plDur").textContent = fmtTime(el.duration);
+    });
+    el.addEventListener("timeupdate", function () {
+      if (AUD.seeking) return;
+      document.getElementById("plTime").textContent = fmtTime(el.currentTime);
+      var seek = document.getElementById("plSeek");
+      seek.value = el.duration ? Math.round((el.currentTime / el.duration) * 1000) : 0;
+      seek.setAttribute("aria-valuetext", fmtTime(el.currentTime) + " of " + fmtTime(el.duration));
+    });
+    el.addEventListener("ended", function () {
+      syncListenUi();
+      var st = stopByAudioId(AUD.currentId);
+      var next = st && AUD.auto ? neighbor(st, 1) : null;
+      if (!next) return;
+      var following = sections[activeSec] && sections[activeSec].stop === st;
+      playStop(next);
+      if (following) goToStop(next.n);
+    });
+    AUD.el = el;
+    if ("mediaSession" in navigator) {
+      var ms = navigator.mediaSession;
+      var on = function (action, fn) { try { ms.setActionHandler(action, fn); } catch (e) { /* unsupported */ } };
+      on("play", function () { el.play(); });
+      on("pause", function () { el.pause(); });
+      on("seekbackward", function () { skip(-15); });
+      on("seekforward", function () { skip(15); });
+      on("seekto", function (d) { if (d && isFinite(d.seekTime)) el.currentTime = d.seekTime; });
+      on("previoustrack", function () { var s = stopByAudioId(AUD.currentId); var p = s && neighbor(s, -1); if (p) playStop(p); });
+      on("nexttrack", function () { var s = stopByAudioId(AUD.currentId); var n = s && neighbor(s, 1); if (n) playStop(n); });
+    }
+    return el;
+  }
+
+  function skip(sec) {
+    if (!AUD.el) return;
+    var d = AUD.el.duration || 0;
+    AUD.el.currentTime = Math.max(0, Math.min(d ? d - 0.2 : 0, AUD.el.currentTime + sec));
+  }
+
+  function showPlayer() {
+    if (!playerEl || !playerEl.hidden) return;
+    playerEl.hidden = false;
+    document.body.classList.add("has-player");
+    if (nudgeState.shown && !nudgeState.done) hideNudge();
+    sizePlayer();
+    requestAnimationFrame(function () { requestAnimationFrame(function () { playerEl.classList.add("in"); }); });
+  }
+  function closePlayer() {
+    if (AUD.el) AUD.el.pause();
+    playerEl.classList.remove("in");
+    playerEl.hidden = true;
+    document.body.classList.remove("has-player");
+    syncListenUi();
+  }
+  function sizePlayer() {
+    var story = document.getElementById("story");
+    if (story) document.documentElement.style.setProperty("--story-w", story.getBoundingClientRect().width + "px");
+  }
+  window.addEventListener("resize", sizePlayer);
+
+  function playStop(st) {
+    var a = audioFor(st);
+    if (!a) return;
+    var el = ensureAudio();
+    var id = audioIdFor(st);
+    if (AUD.currentId !== id) {
+      AUD.currentId = id;
+      el.src = "/audio/" + a.file + "?v=" + a.hash;
+      el.defaultPlaybackRate = AUD.rate;
+      el.playbackRate = AUD.rate;
+      document.getElementById("plKicker").textContent = "Stop " + st.n + " of " + stops.length + " · " + st.place;
+      document.getElementById("plTitle").textContent = st.data.title;
+      document.getElementById("plTime").textContent = "0:00";
+      document.getElementById("plDur").textContent = fmtTime(a.seconds);
+      document.getElementById("plSeek").value = 0;
+      if ("mediaSession" in navigator && window.MediaMetadata) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: st.data.title,
+          artist: "Stop " + st.n + " · The Ikigai Mountain",
+          album: "gnarcoding.com",
+          artwork: [{ src: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }]
+        });
+      }
+    }
+    showPlayer();
+    var p = el.play();
+    if (p && p.catch) p.catch(function () { syncListenUi(); });
+    syncListenUi();
+  }
+
+  if (playerEl) {
+    document.getElementById("plPlay").addEventListener("click", function () {
+      if (!AUD.el) return;
+      if (isPlaying()) AUD.el.pause(); else AUD.el.play();
+    });
+    document.getElementById("plBack").addEventListener("click", function () { skip(-15); });
+    document.getElementById("plFwd").addEventListener("click", function () { skip(15); });
+    document.getElementById("plClose").addEventListener("click", closePlayer);
+    var seek = document.getElementById("plSeek");
+    seek.addEventListener("input", function () {
+      AUD.seeking = true;
+      if (AUD.el && AUD.el.duration) document.getElementById("plTime").textContent = fmtTime((seek.value / 1000) * AUD.el.duration);
+    });
+    seek.addEventListener("change", function () {
+      if (AUD.el && AUD.el.duration) AUD.el.currentTime = (seek.value / 1000) * AUD.el.duration;
+      AUD.seeking = false;
+    });
+    var speedBtn = document.getElementById("plSpeed");
+    var paintSpeed = function () { speedBtn.textContent = AUD.rate + "×"; speedBtn.setAttribute("aria-label", "Playback speed " + AUD.rate + " times"); };
+    paintSpeed();
+    speedBtn.addEventListener("click", function () {
+      AUD.rate = RATES[(RATES.indexOf(AUD.rate) + 1) % RATES.length];
+      if (AUD.el) { AUD.el.defaultPlaybackRate = AUD.rate; AUD.el.playbackRate = AUD.rate; }
+      prefSet(PREF_RATE, AUD.rate);
+      paintSpeed();
+    });
+    var autoBtn = document.getElementById("plAuto");
+    var paintAuto = function () { autoBtn.setAttribute("aria-pressed", String(AUD.auto)); };
+    paintAuto();
+    autoBtn.addEventListener("click", function () { AUD.auto = !AUD.auto; prefSet(PREF_AUTO, AUD.auto ? "1" : "0"); paintAuto(); });
+  }
+  if (listenAllBtn) {
+    listenAllBtn.addEventListener("click", function () {
+      var first = stops.filter(function (s) { return audioFor(s); })[0];
+      if (!first) return;
+      if (!AUD.auto) { AUD.auto = true; prefSet(PREF_AUTO, "1"); document.getElementById("plAuto").setAttribute("aria-pressed", "true"); }
+      playStop(first);
+      goToStop(first.n);
+    });
+  }
+
+  if (window.fetch && playerEl) {
+    fetch("/audio/manifest.json", { cache: "no-cache" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (m) {
+        if (!m || !m.sections || !Object.keys(m.sections).length) return;
+        AUD.manifest = m;
+        decorateStopsWithListen();
+        if (listenAllBtn) listenAllBtn.hidden = false;
+      })
+      .catch(function () { /* no narration yet */ });
+  }
 
   /* ------------------------------------------------------------------ */
   /* Boot                                                                */

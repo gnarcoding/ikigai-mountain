@@ -36,6 +36,16 @@ The site is the Vercel project **ikigai-mountain** in gnarcoding's projects. Eve
 
 The page promises a full refund for cancellations made 24 or more hours ahead. Refunds are not automatic: issue them from the Stripe dashboard.
 
+## Narration (read aloud)
+
+Every stop can be played as audio. `scripts/narrate.mjs` turns each stop's text in `app.js` into a script written for listening and records it with ElevenLabs into `audio/<stop>.mp3`. It also writes `audio/manifest.json`, which the page reads to show its Listen buttons. Until that file exists, the page shows no audio controls.
+
+The GitHub Actions workflow `.github/workflows/narrate.yml` runs the script whenever `app.js`, `narration.config.json` or the script changes on `main`, and you can also start it from the Actions tab. It records only stops whose script, voice or settings changed, so a re-run costs nothing when nothing changed. It then commits the audio, and Vercel deploys that commit.
+
+- **API key:** the repository secret `ELEVENLABS_API_KEY`. It never appears in the code.
+- **Voice and settings:** `narration.config.json` (`voiceId`, `modelId`, `voiceSettings`). Changing the voice re-records every stop.
+- **Preview the scripts without spending credits:** `node scripts/narrate.mjs --print`, or `--print love-2` for one stop.
+
 ## DNS at Namecheap
 
 These are the host records for gnarcoding.com (Domain List → gnarcoding.com → Advanced DNS), as set up for Vercel on November 15, 2026.

@@ -1,0 +1,13 @@
+{
+  "voiceId": "",
+  "voiceName": "",
+  "modelId": "eleven_multilingual_v2",
+  "outputFormat": "mp3_44100_96",
+  "voiceSettings": {
+    "stability": 0.6,
+    "similarity_boost": 0.75,
+    "style": 0.1,
+    "use_speaker_boost": true,
+    "speed": 0.95
+  }
+}

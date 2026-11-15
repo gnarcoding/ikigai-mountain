@@ -908,6 +908,118 @@ a.cta, a.ghost { display: inline-block; text-decoration: none; }
 a.ghost { color: var(--ink); }
 a.cta:focus-visible, a.ghost:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
+/* ---------- Read aloud ---------- */
+.listen-all { display: inline-flex; align-items: center; gap: 8px; }
+.listen-all svg { width: 16px; height: 16px; fill: currentColor; }
+.listen {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: -2px 0 18px;
+  padding: 5px 14px 5px 5px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--chip);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.listen:hover { background: var(--chip-hover); }
+.listen-ic {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--c);
+}
+.listen-ic svg { width: 14px; height: 14px; fill: #fff; }
+.listen-dur { color: var(--ink-soft); font-weight: 500; font-variant-numeric: tabular-nums; }
+.listen.on { background: var(--solid); color: var(--solid-fg); border-color: transparent; }
+.listen.on .listen-dur { color: inherit; opacity: 0.7; }
+.listen:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.player {
+  position: fixed;
+  left: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 45;
+  width: calc(var(--story-w, 560px) - 32px);
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 14px 40px rgba(10, 14, 24, 0.22);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity .28s ease, transform .28s ease;
+}
+.player.in { opacity: 1; transform: none; }
+body.has-player .story { padding-bottom: 150px; }
+.pl-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.pl-now { margin: 0; min-width: 0; display: grid; gap: 1px; }
+.pl-kicker {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink-soft);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pl-title {
+  font-family: var(--font-display); font-weight: 700; font-size: 16px; line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pl-close {
+  flex: none;
+  width: 28px; height: 28px;
+  border: 0; border-radius: 50%;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 20px; line-height: 1;
+  cursor: pointer;
+}
+.pl-close:hover { background: var(--chip-hover); color: var(--ink); }
+.pl-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 6px; }
+.pl-icon, .pl-play {
+  flex: none;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.pl-icon { width: 34px; height: 34px; border: 1px solid var(--line); background: transparent; color: var(--ink); }
+.pl-icon svg { width: 20px; height: 20px; fill: currentColor; }
+.pl-play { width: 42px; height: 42px; border: 0; background: var(--solid); color: var(--solid-fg); }
+.pl-play svg { width: 20px; height: 20px; fill: currentColor; }
+.pl-scrub { flex: 1 1 140px; min-width: 0; display: flex; align-items: center; gap: 8px; padding-inline: 4px; }
+.pl-scrub input { flex: 1; min-width: 0; accent-color: var(--summit); }
+.pl-time { flex: none; min-width: 32px; font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.pl-time:last-child { text-align: right; }
+.pl-chip {
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.pl-chip[aria-pressed="true"] { background: var(--solid); color: var(--solid-fg); border-color: transparent; }
+.pl-icon:focus-visible, .pl-play:focus-visible, .pl-chip:focus-visible, .pl-close:focus-visible, .pl-scrub input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+@media (max-width: 900px) {
+  .player { left: 12px; right: 12px; width: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (max-width: 560px) {
+  .pl-scrub { order: 10; flex-basis: 100%; padding-inline: 0; }
+  body.has-player .story { padding-bottom: 190px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .player { transition: none; transform: none; }
+}
+
 /* ---------- Booking nudge ---------- */
 /* Sits over the mountain, just above the elevation strip, so it never covers what you're reading. */
 .nudge {
@@ -1023,6 +1135,7 @@ a.cta:focus-visible, a.ghost:focus-visible { outline: 2px solid var(--ink); outl
 
       <div class="cta-row">
         <button type="button" class="cta" id="begin">Start climbing ↓</button>
+        <button type="button" class="ghost listen-all" id="listenAll" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>Listen to the whole trail</button>
         <button type="button" class="ghost" data-open-journal>Find where you are</button>
         <button type="button" class="ghost" id="toIndex">See every stop</button>
         <a class="ghost" href="/book">Book an hour</a>
@@ -1073,6 +1186,29 @@ a.cta:focus-visible, a.ghost:focus-visible { outline: 2px solid var(--ink); outl
     </div>
   </div>
 </aside>
+
+<div class="player" id="player" hidden role="region" aria-label="Narration player">
+  <div class="pl-top">
+    <p class="pl-now"><span class="pl-kicker" id="plKicker"></span><span class="pl-title" id="plTitle"></span></p>
+    <button type="button" class="pl-close" id="plClose" aria-label="Stop and close the player">×</button>
+  </div>
+  <div class="pl-controls">
+    <button type="button" class="pl-icon" id="plBack" aria-label="Back 15 seconds">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4V1.5L7.5 5 12 8.5V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/><text x="12.2" y="15.4" text-anchor="middle" font-size="6.6" font-weight="700" font-family="system-ui, sans-serif">15</text></svg>
+    </button>
+    <button type="button" class="pl-play" id="plPlay" aria-label="Play"></button>
+    <button type="button" class="pl-icon" id="plFwd" aria-label="Forward 15 seconds">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4V1.5L16.5 5 12 8.5V6a6 6 0 1 0 6 6h2a8 8 0 1 1-8-8z"/><text x="11.8" y="15.4" text-anchor="middle" font-size="6.6" font-weight="700" font-family="system-ui, sans-serif">15</text></svg>
+    </button>
+    <div class="pl-scrub">
+      <span class="pl-time" id="plTime">0:00</span>
+      <input type="range" id="plSeek" min="0" max="1000" step="1" value="0" aria-label="Position in this stop">
+      <span class="pl-time" id="plDur">0:00</span>
+    </div>
+    <button type="button" class="pl-chip" id="plSpeed">1×</button>
+    <button type="button" class="pl-chip pl-auto" id="plAuto" aria-pressed="true" title="Keep playing the next stops">Autoplay</button>
+  </div>
+</div>
 
 <div class="portal" id="portal" hidden role="dialog" aria-modal="true" aria-labelledby="portalTitle">
   <div class="portal-panel">

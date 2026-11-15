@@ -2493,30 +2493,41 @@
     var m = Math.floor(s / 60), sec = Math.floor(s % 60);
     return m + ":" + (sec < 10 ? "0" : "") + sec;
   }
+  // The intro plays first, then every stop in trail order.
+  var INTRO_TRACK = { kind: "intro", id: "intro", n: 0, place: "Introduction", data: { title: "The Ikigai Mountain" } };
+  function tracks() { return [INTRO_TRACK].concat(stops); }
   function audioIdFor(st) { return st.kind === "trailhead" ? "trailhead-" + SIDES[startIdx].key : st.id; }
   function audioFor(st) { return AUD.manifest ? AUD.manifest.sections[audioIdFor(st)] || null : null; }
   function stopByAudioId(id) {
-    for (var i = 0; i < stops.length; i++) if (audioIdFor(stops[i]) === id) return stops[i];
+    var t = tracks();
+    for (var i = 0; i < t.length; i++) if (audioIdFor(t[i]) === id) return t[i];
     return null;
   }
   function neighbor(st, dir) {
-    for (var i = st.n - 1 + dir; i >= 0 && i < stops.length; i += dir) if (audioFor(stops[i])) return stops[i];
+    var t = tracks();
+    var i = t.indexOf(st);
+    if (i < 0) return null;
+    for (i += dir; i >= 0 && i < t.length; i += dir) if (audioFor(t[i])) return t[i];
     return null;
+  }
+  function trackLabel(st) {
+    return st.kind === "intro" ? "Introduction" : "Stop " + st.n + " of " + stops.length + " · " + st.place;
   }
   function isPlaying() { return !!(AUD.el && !AUD.el.paused && !AUD.el.ended); }
 
   function decorateStopsWithListen() {
     if (!AUD.manifest) return;
-    stops.forEach(function (st) {
-      var li = document.getElementById("stop-" + st.n);
-      if (!li) return;
-      var old = li.querySelector(".listen");
+    tracks().forEach(function (st) {
+      var host = st.kind === "intro" ? document.getElementById("intro") : document.getElementById("stop-" + st.n);
+      if (!host) return;
+      var old = host.querySelector(".listen");
       if (old) old.remove();
       var a = audioFor(st);
       if (!a) return;
       var b = document.createElement("button");
       b.type = "button";
       b.className = "listen";
+      if (st.kind === "intro") b.style.setProperty("--c", "var(--summit)");
       b.dataset.audioId = audioIdFor(st);
       b.innerHTML = '<span class="listen-ic"></span><span class="listen-label"></span><span class="listen-dur"></span>';
       b.querySelector(".listen-dur").textContent = fmtTime(a.seconds);
@@ -2526,7 +2537,7 @@
         if (AUD.currentId === b.dataset.audioId && isPlaying()) AUD.el.pause();
         else playStop(s);
       });
-      li.querySelector(".stop-title").after(b);
+      host.querySelector(st.kind === "intro" ? "h1" : ".stop-title").after(b);
     });
     syncListenUi();
   }
@@ -2570,7 +2581,8 @@
       var st = stopByAudioId(AUD.currentId);
       var next = st && AUD.auto ? neighbor(st, 1) : null;
       if (!next) return;
-      var following = sections[activeSec] && sections[activeSec].stop === st;
+      var sec = sections[activeSec];
+      var following = !!sec && (sec.stop === st || (st.kind === "intro" && sec.kind === "intro"));
       playStop(next);
       if (following) goToStop(next.n);
     });
@@ -2626,7 +2638,7 @@
       el.src = "/audio/" + a.file + "?v=" + a.hash;
       el.defaultPlaybackRate = AUD.rate;
       el.playbackRate = AUD.rate;
-      document.getElementById("plKicker").textContent = "Stop " + st.n + " of " + stops.length + " · " + st.place;
+      document.getElementById("plKicker").textContent = trackLabel(st);
       document.getElementById("plTitle").textContent = st.data.title;
       document.getElementById("plTime").textContent = "0:00";
       document.getElementById("plDur").textContent = fmtTime(a.seconds);
@@ -2634,7 +2646,7 @@
       if ("mediaSession" in navigator && window.MediaMetadata) {
         navigator.mediaSession.metadata = new MediaMetadata({
           title: st.data.title,
-          artist: "Stop " + st.n + " · The Ikigai Mountain",
+          artist: (st.kind === "intro" ? "Introduction" : "Stop " + st.n) + " · The Ikigai Mountain",
           album: "gnarcoding.com",
           artwork: [{ src: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }]
         });
@@ -2679,11 +2691,11 @@
   }
   if (listenAllBtn) {
     listenAllBtn.addEventListener("click", function () {
-      var first = stops.filter(function (s) { return audioFor(s); })[0];
+      var first = tracks().filter(function (s) { return audioFor(s); })[0];
       if (!first) return;
       if (!AUD.auto) { AUD.auto = true; prefSet(PREF_AUTO, "1"); document.getElementById("plAuto").setAttribute("aria-pressed", "true"); }
       playStop(first);
-      goToStop(first.n);
+      if (first.kind !== "intro") goToStop(first.n);
     });
   }
 

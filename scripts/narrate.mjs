@@ -58,6 +58,14 @@ sections.push(["false-summit", data.FALSE_SUMMIT], ["summit", data.SUMMIT_STOP])
 for (const key of Object.keys(data.TRAILHEADS)) if (key !== DEFAULT_START) sections.push(["trailhead-" + key, data.TRAILHEADS[key]]);
 if (sections.length !== 30 || sections.some(([, d]) => !d)) throw new Error("Stop list doesn't match the trail (expected 30 sections).");
 
+// Parts of the page that aren't stops have hand-written scripts in
+// narration/<id>.txt. The intro is heard first, so it's recorded first.
+for (const id of ["intro"].reverse()) {
+  let script = null;
+  try { script = (await readFile(path.join(ROOT, "narration", id + ".txt"), "utf8")).trim(); } catch { /* not written */ }
+  if (script) sections.unshift([id, { script }]);
+}
+
 // ---------------------------------------------------------------- scripts
 
 const lowerFirst = (s) => s.charAt(0).toLowerCase() + s.slice(1);
@@ -69,6 +77,7 @@ const clean = (s) => s
   .trim();
 
 function scriptFor(d) {
+  if (d.script) return d.script.replace(/[“”]/g, '"').replace(/[ \t]+/g, " ");
   const signsLabel = d.signsLabel || "You might be here if";
   const signs = d.signs.map(clean);
   const parts = [

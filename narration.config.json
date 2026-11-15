@@ -3,7 +3,7 @@
   "voiceName": "Lily",
   "modelId": "eleven_multilingual_v2",
   "outputFormat": "mp3_44100_96",
-  "maxCharactersPerRun": 1000,
+  "maxCharactersPerRun": 27100,
   "voiceSettings": {
     "stability": 0.6,
     "similarity_boost": 0.75,

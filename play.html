@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#102f2b">
+<meta name="description" content="Take the first step. Explore Base Camp, find your sparks, and climb the Ikigai Mountain in a small adventure for touch and keyboard.">
+<title>Ikigai · The First Ascent</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/game/style.css">
+<script type="module" src="/game/main.mjs"></script>
+</head>
+<body>
+<header class="topbar"><a class="wordmark" href="/"><span class="brand-mark" aria-hidden="true">△</span><span>IKIGAI<span class="brand-sub">THE FIRST ASCENT</span></span></a><nav aria-label="Game navigation"><button id="levelsButton">Trail map</button><button id="guideButton">Field guide</button><button id="soundButton" aria-pressed="false" aria-label="Turn game sound on">Sound off</button><button id="pauseButton" aria-label="Pause game" hidden>II</button></nav></header>
+<main class="game-shell">
+<div class="playfield" id="playfield">
+<canvas id="gameCanvas" tabindex="0" aria-label="Base Camp adventure. Move with arrow keys or W A S D, strike with Space or J, dash with Shift or K, pause with Escape.">This adventure needs Canvas. You can still <a href="/">read and listen to the mountain guide</a>.</canvas>
+<div class="vignette" aria-hidden="true"></div>
+<div class="hud" id="hud" hidden><div class="vitals"><span id="hearts" aria-label="5 of 5 hearts">♥♥♥♥♥</span><span class="dash-meter"><i id="dashMeter"></i></span></div><div class="quest"><span class="eyebrow" id="regionLabel">01 / THE NORTH FACE</span><strong id="objective">Find your three sparks</strong><span id="sparkCount">0 / 3 collected</span></div></div>
+<div class="boss-hud" id="bossHud" hidden><span>THE DOUBTKEEPER</span><div><i id="bossHealth"></i></div></div>
+<div class="world-hint" id="worldHint" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<section class="start-screen" id="startScreen" aria-labelledby="startTitle">
+<div class="start-copy"><p class="eyebrow"><span class="tiny-spark">✦</span> AN IKIGAI MOUNTAIN ADVENTURE</p><h1 id="startTitle">The first<br><em>ascent.</em></h1><p class="intro-line">You don't need a purpose.<br>Just a spark worth following.</p><div class="start-actions"><button class="primary" id="startButton">Begin the climb <span>↗</span></button><button class="secondary" id="resumeButton" hidden>Continue your climb</button></div><p class="chapter-note">CHAPTER 01 · BASE CAMP<span>3 sparks. One guardian. Your first step.</span></p></div>
+<div class="start-caption"><span class="caption-line"></span><p>WHAT YOU LOVE<br><b>THE NORTH FACE</b></p></div>
+</section>
+<div class="game-credit" id="gameCredit">A small adventure by Gnar Coding <span>·</span> Chapter one</div>
+<noscript><p class="nojs">Enable JavaScript to play, or <a href="/">return to the mountain guide</a>.</p></noscript>
+</div>
+<section class="control-deck" id="controlDeck" aria-label="Game controls" hidden>
+<div class="joystick" id="joystick" role="group" aria-label="Drag to move"><div class="joystick-cross" aria-hidden="true"></div><div class="joystick-knob" id="joystickKnob"></div><span>MOVE</span></div>
+<div class="control-help"><b id="controlTip">Follow the golden trail.</b><span>WASD / arrows to move · Space to strike · Shift to dash</span></div>
+<div class="action-controls"><button class="dash-button" id="dashButton" aria-label="Dash">↝<span>DASH</span></button><button class="strike-button" id="strikeButton" aria-label="Strike">╱<span>STRIKE</span></button></div>
+</section>
+</main>
+<dialog id="pauseDialog" aria-labelledby="pauseTitle"><form method="dialog"><button class="close" aria-label="Resume game">×</button><p class="eyebrow">TAKE A BREATH</p><h2 id="pauseTitle">The mountain can wait.</h2><p>Your sparks and checkpoint are saved on this device.</p><button class="primary" value="resume">Keep climbing ↗</button><button class="secondary" type="button" id="restartButton">Restart this level</button><a class="text-link" href="/">Return to the reading trail</a></form></dialog>
+<dialog id="guideDialog" class="wide-dialog" aria-labelledby="guideTitle"><button class="close" id="closeGuide" aria-label="Close field guide">×</button><p class="eyebrow" id="guideKicker">FIELD GUIDE · STOP 01</p><h2 id="guideTitle">Base Camp</h2><p class="guide-voice" id="guideVoice"></p><p id="guideFeels"></p><h3>The way through</h3><p id="guideThrough"></p><blockquote id="guideQuestion"></blockquote><audio id="narration" controls preload="none" aria-label="Listen to this stop"></audio><p id="audioUnavailable" hidden>Narration is not available for this stop yet.</p><a class="text-link" id="readingLink" href="/?stop=trailhead">Read this on the mountain ↗</a></dialog>
+<dialog id="levelsDialog" class="levels-dialog" aria-labelledby="levelsTitle"><button class="close" id="closeLevels" aria-label="Close trail map">×</button><div class="map-heading"><p class="eyebrow">FOUR FACES · ONE MOUNTAIN</p><h2 id="levelsTitle">Choose your path.</h2><p>Play Base Camp, or explore the story at any stop.<br>The rest of the adventure is still being built.</p></div><div class="mode-row"><button class="primary" id="playChapter">Play chapter one ↗</button><span>Full ascent begins here · 1 of 27 levels ready</span></div><div class="map-filter" id="mapFilter" role="group" aria-label="Filter mountain faces"><button data-face="all" aria-pressed="true">All stops</button><button data-face="love" aria-pressed="false">Love</button><button data-face="good" aria-pressed="false">Skill</button><button data-face="needs" aria-pressed="false">Need</button><button data-face="paid" aria-pressed="false">Livelihood</button></div><div class="chapter-list" id="chapterList"></div></dialog>
+<dialog id="endDialog" aria-labelledby="endTitle"><p class="eyebrow" id="endKicker">THE FIRST STEP IS YOURS</p><div class="end-spark" aria-hidden="true">✦</div><h2 id="endTitle">You kept the spark.</h2><p id="endMessage">You don't have to be good at it yet. Loving it is enough to start.</p><p class="end-stats" id="endStats"></p><button class="primary" id="endAction">Explore the next stop ↗</button><button class="secondary" id="replayButton">Play Base Camp again</button><a class="text-link" href="/">Back to the mountain guide</a></dialog>
+</body></html>

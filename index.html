@@ -1143,6 +1143,11 @@ body.has-player .story { padding-bottom: 150px; }
 }
 @media print { .book-tag { display: none; } }
 .nojs { margin: 0 0 24px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; }
+.adventure-entry { display: block; margin-top: 26px; padding: 20px 22px; border: 1px solid var(--line); border-radius: 12px; text-decoration: none; color: var(--ink); background: var(--card); }
+.adventure-entry small { display: block; color: var(--ink-soft); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
+.adventure-entry strong { display: block; font-family: var(--font-display); font-size: 22px; margin: 7px 0; }
+.adventure-entry span { font-size: 13px; color: var(--ink-soft); line-height: 1.6; }
+.chapter-game-link { display: inline-block; margin-top: 18px; color: var(--ink-soft); font-size: 13px; text-underline-offset: 4px; }
 
 </style>
 <link rel="stylesheet" href="text-foil.css">
@@ -1207,6 +1212,7 @@ body.has-player .story { padding-bottom: 150px; }
         <a class="ghost" href="/book">Book an hour</a>
       </div>
       <p class="last-reading" id="lastReading" hidden></p>
+      <a class="adventure-entry" href="/play"><small>A playable mountain · Chapter one</small><strong>Take the first step ↗</strong><span>Explore Base Camp, recover three sparks, and face the Doubtkeeper. Play with touch or keyboard.</span></a>
     </section>
 
     <ol class="stops" id="stops"></ol>

@@ -839,6 +839,7 @@
           d.signs.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ul></div>" +
         '<div class="through"><h3>' + esc(d.throughLabel || "The way through") + "</h3><p>" + esc(d.through) + "</p></div>" +
         '<p class="carry"><span>Carry this up</span>' + esc(d.question) + "</p>" +
+        (st.kind === "trailhead" && startIdx !== 0 ? "" : '<a class="chapter-game-link" href="/play?chapter=' + (st.kind === "trailhead" ? "trailhead-love" : st.id) + '">' + (st.kind === "trailhead" ? "Play this chapter ↗" : "Explore this chapter in the adventure ↗") + '</a>') +
         "</li>";
     }).join("");
 
@@ -2834,6 +2835,14 @@
   buildJourney(startIdx);
   renderStory();
   applyTheme();
+  // Return from the game's field guide to the exact authored stop.
+  var linkedStop = new URLSearchParams(window.location.search).get("stop");
+  var linkedIndex = stops.findIndex(function (st) { return st.id === linkedStop; });
+  if (linkedIndex >= 0) {
+    var revealLinkedStop = function () { requestAnimationFrame(function () { goToStop(linkedIndex + 1); }); };
+    if (document.readyState === "complete") revealLinkedStop();
+    else window.addEventListener("load", revealLinkedStop, { once: true });
+  }
   if (hasGL) {
     if (window.ResizeObserver) new ResizeObserver(resize).observe(stageEl);
     window.addEventListener("resize", resize);

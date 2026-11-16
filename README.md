@@ -81,3 +81,38 @@ These are the host records for gnarcoding.com (Domain List → gnarcoding.com �
 Leave the Zoho records as they are, or email to gnarcoding.com stops working. If Vercel ever asks for different values, its project Settings → Domains page shows the current ones.
 
 Before this change, `@` was a Namecheap URL redirect to `http://www.gnarcoding.com/` and `www` was a CNAME to `parkingpage.namecheap.com.` (the parking page).
+
+## The First Ascent game (/play)
+
+A separate, mobile-friendly action adventure starts at the Love-side Base Camp.
+The first chapter has three forest terraces, collectible Curiosity/Play/Courage
+sparks, moss slimes, ranged wisps, charging thornlings and a telegraphed guardian
+fight. Collect all three sparks to open the upper gate; defeat the Doubtkeeper
+and reach the beacon to finish. The other 26 chapters are clearly marked as
+future game levels, with their existing story and narration available now.
+
+- Desktop: WASD/arrows to move, Space/J to strike, Shift/K to dash, Escape to pause.
+- Phone: hold/drag the thumbstick and hold Strike; Dash grants brief protection.
+  Pointer capture supports simultaneous thumbs and cancels on interrupted input.
+- Every spark and enemy defeat is saved locally. The upper gate is a checkpoint.
+  Retrying restores hearts and preserves earned sparks. Saves use only the
+  ikigai-mountain:game:base-camp:v1 key and tolerate unavailable storage.
+- The field guide pauses combat and plays the existing self-hosted narration.
+  Closing it pauses audio. Hiding the page pauses the game. Optional game sounds
+  are synthesized locally and start only after the sound button is pressed.
+- Canvas 2D artwork is original and generated locally; no WebGL, libraries,
+  external assets, accounts or network services are required for gameplay.
+  Reduced motion removes ambient drift, bobbing and hit blinking. Combat still
+  requires visual and motor interaction; the entire reading trail remains
+  available independently.
+
+game/engine.mjs is the pure simulation, game/art.mjs draws the world and
+game/main.mjs connects input, menus, narration and saves. The chapter catalogue
+is generated from the existing authored stops by
+node scripts/build-game-data.mjs; run this when changing story content.
+
+Checks: node --test tests/game.test.mjs tests/text-foil.test.cjs,
+node scripts/build-game-data.mjs --check, and JavaScript syntax checks.
+The game tests include an entire successful climb using normal movement and
+combat, terrain/dash collision, death/retry, guardian timing and save validation.
+For local static serving without Vercel's clean URLs, open /play.html.

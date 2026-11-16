@@ -1,4 +1,5 @@
 import { CHAPTERS } from './chapters.mjs';
+import { configureEncounter } from './encounters.mjs';
 
 export const HEROES = [
   {id:'ember',name:'Ember',role:'The Wanderer',description:'A steady heart and a curious spirit.',trait:'Balanced · 5 hearts',hp:5,speed:155,reach:68,dashCooldown:1.1,coat:'#e8ad60',cape:'#ad663e',hair:'#4a3b2d',skin:'#efd3a2',accent:'#f5d486',hat:'#799778'},
@@ -92,9 +93,9 @@ export const LEVELS=specs.map((spec,index)=>{
   const hazards=hazardKind==='none'?[]:goals.slice(0,3).map((g,i)=>({
     x:(g.x+480)/2-42,y:g.y+62,w:84,h:30,kind:hazardKind,offset:i*.9+index*.2
   }));
-  return {id:chapter.id,index,chapter,kind,objective,bossName,pattern,biome,theme:THEMES[biome],width,height,stairs,rocks,paths,goals,enemies,hazards,spawn,beacon,
+  return configureEncounter({id:chapter.id,index,chapter,kind,objective,bossName,pattern,biome,theme:THEMES[biome],width,height,stairs,rocks,paths,goals,enemies,hazards,spawn,beacon,
     bossHp:index===0?12:12+Math.floor(index/7)*2,
     instructions:kind==='collect'?'Walk into each glowing spark.':kind==='sequence'?'Strike the numbered runes in order: 1, 2, 3.':kind==='rescue'?'Defeat the nearby monsters, then approach each spirit.':kind==='wardens'?'Defeat each armored guardian, then claim its sigil.':'Strike each unlit shrine to awaken it.',
-    checkpoint:{x:center(gate),y:gate.y+103}};
+    checkpoint:{x:center(gate),y:gate.y+103}});
 });
 export const levelAt=index=>LEVELS[Number.isInteger(index)&&index>=0&&index<LEVELS.length?index:0];

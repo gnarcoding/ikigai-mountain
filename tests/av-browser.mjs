@@ -20,7 +20,7 @@ async function render(index){
  const l=LEVELS[index],ctx=new OfflineAudioContext(2,44100*8,44100),a=new MountainAudio(null);a.context=ctx;a.score=scoreFor(l);a.enabled=true;a.paused=false;a.buildGraph();
  for(const e of a.score.events)if(e.beat<8)a.note(e,.1+e.beat*60/a.score.bpm,60/a.score.bpm);
  // Layer combat FX over the music to check the combined peak and tails.
- for(const [time,type] of [[1,'strike'],[1.2,'hit'],[2,'dash'],[3,'spark']]){
+ for(const [time,type] of [[1,'finisher'],[1.2,'hit'],[2,'parry'],[3,'power'],[3.1,'impact'],[4,'rune']]){
   const existing=a.voice.bind(a);a.voice=o=>existing({...o,at:o.at+time});
   // OfflineAudioContext is suspended before render; exercise the same effect
   // envelopes through a tiny clock adapter without mutating the browser context.

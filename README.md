@@ -94,21 +94,41 @@ Each has a distinct appearance and real movement/combat stats. Change characters
 from the pause menu without losing objectives or completion history.
 
 The six environments are forests, blue stone ruins, lantern wetlands, copper
-canyons, violet ridgelands and cloud gardens. Chapters use different terrace
-layouts, enemy mixes and five objective types: collect sparks, rescue spirits,
-strike ordered runes, defeat armored wardens and awaken shrines. Guardians
-telegraph charges, volleys or ground strikes; the final guardian combines them.
-Complete each objective to open the upper gate, defeat the guardian, then light
-the beacon. The final chapter brings together all four faces of the mountain.
+canyons, violet ridgelands and cloud gardens. The Wild Ascent replaces the
+repeated three-pickup climb with nine encounter styles:
 
-- Keyboard: WASD/arrows move, Space/J strikes, Shift/K dashes, Escape pauses.
-- Touch: left thumbstick, right strike and dash buttons; portrait and landscape.
+| Encounter | Chapters | What changes |
+| --- | --- | --- |
+| Spark hunt | 1 | Explore the introductory trail and learn the three-hit finisher. |
+| Spirit escort | 2, 14, 18 | Guide Mote along the actual route; it waits when separated or frightened by nearby enemies. |
+| Echo chamber | 3, 11, 15 | Play rune verses in a four-pillar puzzle garden; later verses are longer. |
+| Wave arena | 4, 10, 19, 24 | Fight changing formations in a compact court; later arenas add enemies. |
+| Dash rally | 5, 17, 26 | Dash through an ordered slalom, refreshing Dash at every ring; chase a gold time without a fail timer. |
+| Storm ascent | 6, 21, 25, 27 | Dodge telegraphed falling stones, break seals and challenge a summit guardian. |
+| Sanctuary stand | 7, 16, 23 | Hold a charging circle through three waves; leaving pauses charge and damage pushes it back. |
+| Mirror trial | 8, 12, 22 | Reflect three actual bolts into each mirror to break its seal. |
+| Relic heist | 9, 13, 20 | Steal relics around rotating watcher cones; detection triggers faster volleys. |
+
+Only hunts, heists and storm climbs end in a separate guardian fight. Their
+second phase changes attack patterns; the summit cycles all four patterns.
+Other encounters open an exit to the beacon as soon as their own challenge ends.
+
+Each hero has an active special: Ember's Flare, Reed's Slipstream, Flint's
+Earthbreaker or Wren's Starcall. Specials recharge over time and through combat;
+third strikes become sweeping finishers, strikes reflect enemy bolts, and
+unbroken hit chains earn flow points. Choose one relic per chapter: Comet Fang
+for stronger finishers, Zephyr Feather for movement/dash speed, or Mossheart for
+healing and longer protection on specials. Clear chapters for gold/silver/bronze
+medals; best medals and scores survive replays.
+
+- Keyboard: WASD/arrows move, Space/J strikes, Shift/K dashes, E uses your special, Escape pauses.
+- Touch: left thumbstick, right special, strike and dash buttons; portrait and landscape.
 - Browser saves include the selected climber, current chapter, campaign/single
   mode, per-level objectives, position/hearts, living enemy state, checkpoints,
-  elapsed time, deaths, completion history and best times. Continue resumes the
+  elapsed time, deaths, relic, special charge, encounter state, completion history, medals, scores and best times. Continue resumes the
   saved chapter. Replaying never removes a previously earned completion badge.
 - Saves use localStorage key `ikigai-mountain:game:journey:v2`. Existing Base Camp
-  v1 progress migrates without deleting the old key. Invalid v2 JSON is retained
+  v1 progress migrates without deleting the old key. Per-chapter snapshots are now v3; older v1/v2 snapshots retain earned objectives and completions but restart at a safe checkpoint when layouts change. Invalid v2 JSON is retained
   under `:recovery`. Storage failures show an honest session-only notice. Saves
   are specific to a browser/device/origin, without an account or cloud sync.
 - Saving happens on meaningful events, every two seconds while playing, on
@@ -126,10 +146,15 @@ terrain/sprites; `game/main.mjs` connects input, menus, narration and persistenc
 The chapter catalogue is generated directly from the authored story in app.js:
 run `node scripts/build-game-data.mjs` after changing that content.
 
-Checks: `node --test tests/game.test.mjs tests/audio.test.mjs tests/text-foil.test.cjs`,
+Checks: `node --test tests/game.test.mjs tests/encounters.test.mjs tests/audio.test.mjs tests/text-foil.test.cjs`,
 `node scripts/build-game-data.mjs --check`, and JavaScript syntax checks.
 The tests exercise all chapters with ordinary movement and combat, objective
-rules, collision, guardians, character stats, saves, migration and replay.
+rules, collision, guardians, character stats, saves, migration and replay. All 108 chapter/hero combinations are completed through normal simulation inputs.
+
+`game/encounters.mjs` owns the encounter catalogue and rules;
+`game/encounter-art.mjs` draws their interactive objects and telegraphs.
+`/tests/encounter-preview.html` renders all nine styles and runs the same 108
+climbs in a browser without reading or modifying player storage.
 
 
 ### Music, holographic lettering and visual effects

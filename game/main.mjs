@@ -1,3 +1,4 @@
+import { RELICS, POWERS, encounterStatus, rankFor } from './encounters.mjs';
 import { createGame, step, retry } from './engine.mjs';
 import { Painter, drawHeroPortrait } from './art.mjs';
 import { MountainAudio } from './audio.mjs';
@@ -10,13 +11,13 @@ let storage;try{storage=window.localStorage;}catch{storage=null;}
 const audio=new MountainAudio(storage);
 let cinematic=true;try{cinematic=storage?.getItem('ikigai-mountain:cinematic')!=='false';}catch{}
 const loaded=loadJourney(storage);let journey=loaded.journey,storageAvailable=loaded.status!=='unavailable';
-const dialogs=[...document.querySelectorAll('dialog')],keys=new Set(),touch={x:0,y:0,strike:false,dash:false};
+const dialogs=[...document.querySelectorAll('dialog')],keys=new Set(),touch={x:0,y:0,strike:false,dash:false,special:false};
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 let game=createGame(),started=false,last=0,frame=0,manifest=null;
 let toastUntil=0,lastSave=0,returnToMap=false,guideIndex=0,lastPaint=0,joystickPointer=null,pendingStart=null;
 const paused=()=>dialogs.some(d=>d.open);
 const put=(id,text)=>{if($(id).textContent!==text)$(id).textContent=text;};
-function resetInput(){keys.clear();joystickPointer=null;touch.x=touch.y=0;touch.strike=touch.dash=false;$('joystickKnob').style.transform='';}
+function resetInput(){keys.clear();joystickPointer=null;touch.x=touch.y=0;touch.strike=touch.dash=touch.special=false;$('joystickKnob').style.transform='';}
 function toast(text){$('toast').textContent=text;$('toast').classList.add('visible');toastUntil=performance.now()+4200;}
 function save(){
   if(started)recordGame(journey,game);
@@ -86,13 +87,15 @@ function startLevel({index,mode,resume=true}){
   game=createGame(saved,index,journey.heroId);journey.mode=mode;journey.currentLevel=index;started=true;resetInput();
   // Consume the entry link so a reload offers the latest saved chapter.
   const entryURL=new URL(location.href);entryURL.searchParams.delete('chapter');history.replaceState(null,'',entryURL);
-  $('startScreen').hidden=true;$('gameCredit').hidden=true;$('hud').hidden=false;$('controlDeck').hidden=false;$('pauseButton').hidden=false;
+  $('startScreen').hidden=true;$('gameCredit').hidden=true;$('hud').hidden=false;$('challengeStatus').hidden=false;$('controlDeck').hidden=false;$('pauseButton').hidden=false;
   document.body.classList.add('playing');document.documentElement.style.setProperty('--gold',level.theme.accent);
   painter.setLevel(level);painter.resize();audio.setChapter(level);last=0;save();paintHUD();syncAudio();
   if(game.completed){game.status='won';finishScreen(true);return;}
   put('briefKicker','CHAPTER '+String(index+1).padStart(2,'0')+' / 27 · '+level.theme.name.toUpperCase());
   put('briefTitle',level.chapter.title);put('briefMission',level.objective);put('briefInstructions',level.instructions);
-  put('briefBoss','Guardian: '+level.bossName);
+  put('briefBoss',level.hasBoss?'Guardian: '+level.bossName+' · enrages at half health':'Finale: complete the encounter and reach the beacon');
+  put('briefMode',level.encounter.name+' · gold pace '+level.par+'s');
+  for(const radio of $('relicChoices').querySelectorAll('input'))radio.checked=radio.value===game.relic;
   put('briefReflection','“'+level.chapter.voice+'”');
   $('enterLevel').textContent=saved?'Resume this chapter ↗':'Enter this chapter ↗';
   openDialog($('briefDialog'));
@@ -103,9 +106,16 @@ function paintHUD(){
   const label=p.hp+' of '+hero.hp+' hearts';if($('hearts').getAttribute('aria-label')!==label)$('hearts').setAttribute('aria-label',label);
   $('dashMeter').style.width=((1-p.dashCooldown/hero.dashCooldown)*100)+'%';
   put('objective',game.sparks.size<level.goals.length?level.objective:keeper.hp>0?'Face '+level.bossName:'Light the beacon');
-  put('sparkCount',game.sparks.size+' / '+level.goals.length+' '+({collect:'sparks',rescue:'spirits',sequence:'runes',wardens:'sigils',beacons:'shrines'}[level.kind]));
+  put('sparkCount',game.sparks.size+' / '+level.goals.length+' '+level.encounter.verb);
+  put('challengeStatus',encounterStatus(game));
+  put('comboLabel',game.challenge.combo>1?game.challenge.combo+' HIT FLOW':'');
+  put('powerName',POWERS[hero.id].name);
+  put('powerCharge',game.power>=100?'READY':Math.floor(game.power)+'%');
+  $('specialButton').style.setProperty('--charge',game.power+'%');
+  $('specialButton').dataset.ready=String(game.power>=100);
+  $('specialButton').setAttribute('aria-label',POWERS[hero.id].name+(game.power>=100?' ready':', '+Math.floor(game.power)+' percent charged'));
   put('regionLabel',String(level.index+1).padStart(2,'0')+' / '+level.theme.name.toUpperCase());
-  put('bossName',level.bossName.toUpperCase());
+  put('bossName',level.bossName.toUpperCase()+(keeper.enraged?' · ENRAGED':''));
   $('bossHud').hidden=game.zone!=='guardian'||keeper.hp<=0;$('bossHealth').style.width=(keeper.hp/keeper.maxHp*100)+'%';
   $('worldHint').hidden=game.zone!=='guardian'||keeper.hp<=0;
   put('worldHint',keeper.phase==='warning'?(keeper.attack==='stomp'?'Leave the glowing circle.':keeper.attack==='charge'?'Dash out of the charge.':'A volley is coming. Keep moving.'):keeper.phase==='rest'?'Your opening. Strike now.':'Watch. Dodge. Find your opening.');
@@ -116,7 +126,7 @@ function finishScreen(won){
   put('endKicker',won?(final?'THE SUMMIT · A REASON FOR BEING':'CHAPTER '+String(index+1).padStart(2,'0')+' COMPLETE'):'REST. THEN TRY AGAIN.');
   put('endTitle',won?(final?'You reached Ikigai.':'A little higher. A little wiser.'):'A stumble is not the end.');
   put('endMessage',won?game.level.chapter.question:'Your objectives are safe. Return to your checkpoint with full hearts.');
-  put('endStats',won?Math.floor(game.seconds/60)+'m '+Math.floor(game.seconds%60)+'s · '+game.defeated.size+' doubts overcome · '+count+' / 27 chapters complete':(game.checkpoint==='gate'?'Upper gate':'Trailhead')+' checkpoint · '+game.sparks.size+' / '+game.level.goals.length+' objectives kept');
+  put('endStats',won?rankFor(game).toUpperCase()+' · '+game.challenge.score+' points · '+Math.floor(game.seconds/60)+'m '+Math.floor(game.seconds%60)+'s · '+game.defeated.size+' doubts overcome · '+count+' / 27 chapters complete':(game.checkpoint==='gate'?'Upper gate':'Trailhead')+' checkpoint · '+game.sparks.size+' / '+game.level.goals.length+' objectives kept');
   put('endAction',won?(final?'Explore the mountain again ↗':journey.mode==='campaign'?'Next chapter ↗':'Choose another chapter ↗'):'Return to checkpoint ↗');
   $('replayButton').hidden=!won;$('endReadButton').hidden=!won;openDialog($('endDialog'));
 }
@@ -150,8 +160,8 @@ for(const hero of HEROES){
   const name=document.createElement('strong');name.className='foil-text';name.textContent=hero.name;
   radio.addEventListener('change',()=>audio.effect('select'));
   const role=document.createElement('span');role.className='hero-role';role.textContent=hero.role;
-  const description=document.createElement('span');description.className='hero-description';description.textContent=hero.description;
-  const trait=document.createElement('small');trait.textContent=hero.trait;
+  const description=document.createElement('span');description.className='hero-description';description.textContent=hero.description+' '+POWERS[hero.id].tip;
+  const trait=document.createElement('small');trait.textContent=hero.trait+' · '+POWERS[hero.id].name;
   label.append(radio,portrait,name,role,description,trait);$('heroChoices').append(label);drawHeroPortrait(portrait,hero.id);
 }
 $('confirmPlayer').addEventListener('click',()=>{
@@ -188,12 +198,12 @@ function renderChapters(face='all'){
     const number=document.createElement('span');number.className='chapter-number';number.textContent=record?.cleared?'✓':String(index+1).padStart(2,'0');
     const content=document.createElement('div'),title=document.createElement('h3'),note=document.createElement('p'),actions=document.createElement('div');actions.className='chapter-actions';
     title.className='foil-text';title.textContent=chapter.title;
-    note.textContent=(record?.cleared?'Complete · ':record?'In progress · ':'')+level.theme.name+' · '+({collect:'Collect',rescue:'Rescue',sequence:'Rune puzzle',wardens:'Guardian trial',beacons:'Shrine quest'}[level.kind]);
+    note.textContent=(record?.cleared?'Complete · ':record?'In progress · ':'')+level.encounter.name+' · '+level.theme.name;
     const play=document.createElement('button');play.textContent=record?.cleared?'Replay level ↗':record?'Continue level ↗':'Play level ↗';
     play.addEventListener('click',()=>requestStart(index,'single',{resume:!record?.cleared}));
     const read=document.createElement('button');read.textContent='Read / listen';read.addEventListener('click',()=>showGuide(index,true));
     actions.append(play,read);content.append(title,note,actions);
-    if(record?.bestSeconds){const best=document.createElement('small');best.className='best-time';best.textContent='Best climb: '+Math.floor(record.bestSeconds/60)+'m '+Math.floor(record.bestSeconds%60)+'s';content.append(best);}
+    if(record?.bestSeconds){const best=document.createElement('small');best.className='best-time';best.textContent=(record.bestRank?record.bestRank.toUpperCase()+' · ':'')+'Best climb: '+Math.floor(record.bestSeconds/60)+'m '+Math.floor(record.bestSeconds%60)+'s';content.append(best);}
     card.append(number,content);list.append(card);
   }
 }
@@ -203,7 +213,7 @@ function keyInput(e,down){
   if(!started||paused()||game.status!=='playing')return;
   // Keep normal keyboard activation available on navigation and action buttons.
   if(e.target instanceof HTMLElement&&e.target.closest('button,a,input,select,textarea'))return;
-  const accepted=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD','Space','KeyJ','ShiftLeft','ShiftRight','KeyK'];
+  const accepted=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD','Space','KeyJ','ShiftLeft','ShiftRight','KeyK','KeyE'];
   if(accepted.includes(e.code)){e.preventDefault();if(down)keys.add(e.code);else keys.delete(e.code);}
 }
 window.addEventListener('keydown',e=>keyInput(e,true));window.addEventListener('keyup',e=>{keys.delete(e.code);});
@@ -235,14 +245,14 @@ function bindAction(id,action){
   for(const ev of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(ev,()=>{touch[action]=false;});
   button.addEventListener('click',e=>{if(e.detail===0&&!paused()){step(game,{x:0,y:0,[action]:true},0);}});
 }
-bindAction('strikeButton','strike');bindAction('dashButton','dash');
+bindAction('strikeButton','strike');bindAction('dashButton','dash');bindAction('specialButton','special');
 function loop(now){
   frame=0;if(document.hidden)return;
   const dt=last?Math.min((now-last)/1000,.05):0;last=now;
   if(started&&!paused()&&game.status==='playing'){
     const x=touch.x+(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0);
     const y=touch.y+(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0);
-    step(game,{x,y,strike:touch.strike||keys.has('Space')||keys.has('KeyJ'),dash:touch.dash||keys.has('ShiftLeft')||keys.has('ShiftRight')||keys.has('KeyK')},dt);
+    step(game,{x,y,strike:touch.strike||keys.has('Space')||keys.has('KeyJ'),dash:touch.dash||keys.has('ShiftLeft')||keys.has('ShiftRight')||keys.has('KeyK'),special:touch.special||keys.has('KeyE')},dt);
     const events=game.events.splice(0);
     // Save the win before its completion screen reports the campaign count.
     if(events.some(e=>e.type==='save'))save();
@@ -255,6 +265,7 @@ function loop(now){
   frame=requestAnimationFrame(loop);
 }
 new ResizeObserver(()=>painter.resize()).observe(canvas);painter.resize();frame=requestAnimationFrame(loop);
+for(const relic of RELICS){const label=document.createElement('label');label.className='relic-card';const radio=document.createElement('input');radio.type='radio';radio.name='relic';radio.value=relic.id;const name=document.createElement('strong');name.textContent=relic.icon+' '+relic.name;const note=document.createElement('span');note.textContent=relic.text;label.append(radio,name,note);$('relicChoices').append(label);radio.addEventListener('change',()=>{game.relic=relic.id;save();});}
 paintProgress();renderChapters();paintAudio();syncAudio();
 if(loaded.status==='recovered')toast('The previous save could not be read. A recovery copy was kept in this browser.');
 const selected=new URLSearchParams(location.search).get('chapter');

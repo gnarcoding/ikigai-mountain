@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame, step, blocked, move, strike, dash, retry, readProgress, saveProgress, distance } from '../game/engine.mjs';
+import { runeVerse } from '../game/encounters.mjs';
 import { CHAPTERS } from '../game/chapters.mjs';
 import { LEVELS, HEROES } from '../game/levels.mjs';
 import { SAVE_KEY, LEGACY_KEY, emptyJourney, normalizeJourney, loadJourney, recordGame, persistJourney, clearedCount, campaignNext } from '../game/progress.mjs';
@@ -12,8 +13,8 @@ function openArena(index){const g=createGame(null,index);g.level.goals.forEach(s
 
 test('27 playable chapters retain all authored addresses and distinct content',()=>{
  assert.equal(CHAPTERS.length,27);assert.equal(LEVELS.length,27);assert.equal(new Set(LEVELS.map(l=>l.id)).size,27);
- assert.equal(new Set(LEVELS.map(l=>l.kind)).size,5);assert.equal(new Set(LEVELS.map(l=>l.biome)).size,6);
- assert.equal(new Set(LEVELS.map(l=>JSON.stringify(l.stairs))).size,8);
+ assert.equal(new Set(LEVELS.map(l=>l.kind)).size,9);assert.equal(new Set(LEVELS.map(l=>l.biome)).size,6);
+ assert.equal(new Set(LEVELS.map(l=>JSON.stringify(l.stairs))).size,7);
  for(const l of LEVELS){assert.equal(l.chapter,CHAPTERS[l.index]);assert.ok(l.objective&&l.instructions&&l.bossName);assert.ok(!blocked(createGame(null,l.index),l.spawn.x,l.spawn.y));}
  assert.equal(LEVELS[26].goals.length,4);assert.equal(LEVELS[26].pattern,'cycle');
 });
@@ -40,14 +41,15 @@ test('diagonal movement is normalized; long frames and dash cannot cross boundar
 test('every gate requires the exact number of distinct goals, including four at Ikigai',()=>{
  for(const l of LEVELS){const g=createGame(null,l.index),gate=l.stairs[2];assert.equal(blocked(g,gate.x+64,gate.y+10),true);l.goals.slice(0,-1).forEach(s=>g.sparks.add(s.id));assert.equal(blocked(g,gate.x+64,gate.y+10),true);g.sparks.add(l.goals.at(-1).id);assert.equal(blocked(g,gate.x+64,gate.y+10),false);}
 });
-test('ordered runes reject the wrong order and shrines require a strike',()=>{
- const g=createGame(null,2);Object.assign(g.player,g.level.goals[1]);strike(g);assert.equal(g.sparks.size,0);
- Object.assign(g.player,g.level.goals[0]);g.player.attackCooldown=0;strike(g);assert.equal(g.sparks.size,1);
+test('echo verses reject the wrong symbol, accept the right sequence, and storms require a strike',()=>{
+ const g=createGame(null,2),verse=runeVerse(g);Object.assign(g.player,g.level.runes[(verse[0]+1)%4]);strike(g);assert.equal(g.challenge.runeStep,0);
+ for(const n of verse){Object.assign(g.player,g.level.runes[n]);g.player.attackCooldown=0;strike(g);}assert.equal(g.sparks.size,1);
  const b=createGame(null,5);Object.assign(b.player,b.level.goals[0]);step(b,idle,0);assert.equal(b.sparks.size,0);strike(b);assert.equal(b.sparks.size,1);
 });
-test('spirits and warden sigils cannot be collected until their enemies are cleared',()=>{
- for(const index of [1,3]){const g=createGame(null,index),goal=g.level.goals[0];Object.assign(g.player,{x:goal.x,y:goal.y});step(g,idle,0);assert.equal(g.sparks.size,0);
- for(const e of g.enemies)if(distance(e,goal)<150){e.hp=0;g.defeated.add(e.id);}step(g,idle,0);assert.equal(g.sparks.size,1);}
+test('escort waypoints need the companion; arenas cannot skip living enemies',()=>{
+ const g=createGame(null,1),goal=g.level.goals[0];Object.assign(g.player,{x:goal.x,y:goal.y});step(g,idle,0);assert.equal(g.sparks.size,0);
+ Object.assign(g.challenge.escort,{x:goal.x,y:goal.y});step(g,idle,0);assert.equal(g.sparks.size,1);
+ const a=createGame(null,3);step(a,idle,0);assert.equal(a.sparks.size,0);for(const e of a.enemies)if(e.wave===0){e.hp=0;a.defeated.add(e.id);}step(a,idle,0);assert.equal(a.sparks.size,1);
 });
 test('strike cooldown prevents repeated damage and dash protects briefly',()=>{
  const g=createGame(),e=g.enemies[0];g.player.x=e.x-55;g.player.y=e.y;assert.equal(strike(g),true);assert.equal(e.hp,1);assert.equal(strike(g),false);assert.equal(e.hp,1);
@@ -60,20 +62,20 @@ test('death and reload return safely to the checkpoint and preserve earned goals
  for(const restored of [retry(g),createGame(saveProgress(g))]){assert.equal(restored.player.hp,5);assert.ok(restored.sparks.has('curiosity'));assert.equal(restored.status,'playing');assert.equal(restored.player.y,g.level.spawn.y);}
 });
 test('guardians telegraph each attack, recover, and stay inside their arena',()=>{
- for(const index of [0,1,3,26]){const g=openArena(index),b=g.enemies.at(-1);b.cooldown=0;step(g,idle,.02);assert.equal(b.phase,'warning');assert.ok(['charge','volley','stomp','ring'].includes(b.attack));
+ for(const index of [0,5,8,26]){const g=openArena(index),b=g.enemies.at(-1);b.cooldown=0;step(g,idle,.02);assert.equal(b.phase,'warning');assert.ok(['charge','volley','stomp','ring'].includes(b.attack));
  run(g,idle,1.6);assert.equal(b.phase,'rest');move(g,b,2000,2000);assert.ok(b.x<=880&&b.y<=320);
  g.player.y=450;step(g,idle,.02);assert.equal(b.phase,'idle');assert.ok(b.cooldown>=.5);
  }
  const g=openArena(26),b=g.enemies.at(-1),patterns=[];for(let i=0;i<4;i++){b.phase='idle';b.cooldown=0;step(g,idle,.01);patterns.push(b.attack);}assert.deepEqual(patterns,['charge','volley','stomp','ring']);
 });
 test('defeating a guardian clears projectiles before the beacon walk',()=>{
- const g=openArena(1),b=g.enemies.at(-1);b.hp=1;g.player.x=b.x;g.player.y=b.y+60;g.projectiles.push({x:0,y:0,vx:0,vy:0,life:4});strike(g);assert.equal(b.hp,0);assert.equal(g.projectiles.length,0);
+ const g=openArena(5),b=g.enemies.at(-1);b.hp=1;g.player.x=b.x;g.player.y=b.y+60;g.projectiles.push({x:0,y:0,vx:0,vy:0,life:4});strike(g);assert.equal(b.hp,0);assert.equal(g.projectiles.length,0);
 });
 test('fallen and won simulations freeze',()=>{const g=createGame();for(const status of ['fallen','won']){g.status=status;const x=g.player.x;step(g,{x:1},.05);assert.equal(g.player.x,x);assert.equal(strike(g),false);}});
 
 test('browser save roundtrip retains hero, mode, location, HP and living enemy damage',()=>{
- const s=storage(),j=emptyJourney(),g=createGame(null,9,'flint');j.chosen=true;j.mode='single';run(g,{x:1},.5);g.player.hp=4;g.enemies[0].hp=2;g.sparks.add(g.level.goals[0].id);recordGame(j,g,100);assert.equal(persistJourney(s,j),true);
- const loaded=loadJourney(s).journey;assert.equal(loaded.heroId,'flint');assert.equal(loaded.currentLevel,9);assert.equal(loaded.mode,'single');const r=createGame(loaded.records[g.level.id].progress,9,loaded.heroId);
+ const s=storage(),j=emptyJourney(),g=createGame(null,8,'flint');j.chosen=true;j.mode='single';run(g,{x:1},.5);g.player.hp=4;g.enemies[0].hp=2;g.sparks.add(g.level.goals[0].id);recordGame(j,g,100);assert.equal(persistJourney(s,j),true);
+ const loaded=loadJourney(s).journey;assert.equal(loaded.heroId,'flint');assert.equal(loaded.currentLevel,8);assert.equal(loaded.mode,'single');const r=createGame(loaded.records[g.level.id].progress,8,loaded.heroId);
  assert.equal(r.player.x,g.player.x);assert.equal(r.player.hp,4);assert.equal(r.enemies[0].hp,2);assert.deepEqual([...r.sparks],[...g.sparks]);
 });
 test('changing chapters and replaying cannot erase completions or best times',()=>{

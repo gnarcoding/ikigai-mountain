@@ -32,6 +32,23 @@ For a device smoke test, open the site over HTTPS on Android Chrome and iOS Safa
 tilt left/right and forward/back, then rotate to landscape. On iOS, also check
 permission denial. Dragging the mountain and scrolling should still work normally.
 
+## Japanese scroll reveal
+
+`text-reveal.js` and `text-reveal.css` dissolve a jade katakana mirage into the
+original English as each heading or passage enters the reading area while
+scrolling down. Words resolve in reading order over about a second. Each passage
+plays once per page visit, including when changing trailheads; scrolling back
+does not replay it. The katakana is decorative Matrix-style glyphs, not a translation.
+
+The effect preserves the English for screen readers and narration, restores clean
+text when copying or interacting, and waits until passages clear the sticky
+mountain on phones. Reduced motion, forced colors and print show plain English.
+The existing foil styling returns when a heading finishes revealing.
+
+Serve the repository and open `tests/text-reveal.html` for the 20 browser checks
+covering scroll direction, one-time playback, mobile visibility, layout, copying,
+accessibility preferences and interaction with foil text.
+
 ## Privacy
 
 The Trail Journal saves answers and readings in the visitor's own browser (`localStorage`, keys starting with `ikigai-mountain:`). Nothing is sent to a server, and the mountain page loads nothing from third parties: fonts and three.js are served from this site. The Content Security Policy in `vercel.json` enforces that (`default-src 'self'`).

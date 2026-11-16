@@ -863,6 +863,7 @@
     scrollDirty = true;
     applyYouBadges();
     decorateStopsWithListen();
+    document.dispatchEvent(new Event("ikigai:story-rendered"));
   }
 
   indexEl.addEventListener("click", function (e) {

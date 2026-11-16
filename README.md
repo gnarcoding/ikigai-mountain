@@ -84,35 +84,49 @@ Before this change, `@` was a Namecheap URL redirect to `http://www.gnarcoding.c
 
 ## The First Ascent game (/play)
 
-A separate, mobile-friendly action adventure starts at the Love-side Base Camp.
-The first chapter has three forest terraces, collectible Curiosity/Play/Courage
-sparks, moss slimes, ranged wisps, charging thornlings and a telegraphed guardian
-fight. Collect all three sparks to open the upper gate; defeat the Doubtkeeper
-and reach the beacon to finish. The other 26 chapters are clearly marked as
-future game levels, with their existing story and narration available now.
+A mobile-friendly action adventure spans all 27 authored stops, from Base Camp
+to Ikigai. Play them sequentially in the full ascent, or enter any chapter from
+the trail map or its reading page. Every chapter keeps its original writing,
+reflection question and narration. The reading experience remains independent.
 
-- Desktop: WASD/arrows to move, Space/J to strike, Shift/K to dash, Escape to pause.
-- Phone: hold/drag the thumbstick and hold Strike; Dash grants brief protection.
-  Pointer capture supports simultaneous thumbs and cancels on interrupted input.
-- Every spark and enemy defeat is saved locally. The upper gate is a checkpoint.
-  Retrying restores hearts and preserves earned sparks. Saves use only the
-  ikigai-mountain:game:base-camp:v1 key and tolerate unavailable storage.
-- The field guide pauses combat and plays the existing self-hosted narration.
-  Closing it pauses audio. Hiding the page pauses the game. Optional game sounds
-  are synthesized locally and start only after the sound button is pressed.
-- Canvas 2D artwork is original and generated locally; no WebGL, libraries,
-  external assets, accounts or network services are required for gameplay.
-  Reduced motion removes ambient drift, bobbing and hit blinking. Combat still
-  requires visual and motor interaction; the entire reading trail remains
-  available independently.
+Choose Ember (balanced), Reed (fast), Flint (six hearts), or Wren (longer reach).
+Each has a distinct appearance and real movement/combat stats. Change characters
+from the pause menu without losing objectives or completion history.
 
-game/engine.mjs is the pure simulation, game/art.mjs draws the world and
-game/main.mjs connects input, menus, narration and saves. The chapter catalogue
-is generated from the existing authored stops by
-node scripts/build-game-data.mjs; run this when changing story content.
+The six environments are forests, blue stone ruins, lantern wetlands, copper
+canyons, violet ridgelands and cloud gardens. Chapters use different terrace
+layouts, enemy mixes and five objective types: collect sparks, rescue spirits,
+strike ordered runes, defeat armored wardens and awaken shrines. Guardians
+telegraph charges, volleys or ground strikes; the final guardian combines them.
+Complete each objective to open the upper gate, defeat the guardian, then light
+the beacon. The final chapter brings together all four faces of the mountain.
 
-Checks: node --test tests/game.test.mjs tests/text-foil.test.cjs,
-node scripts/build-game-data.mjs --check, and JavaScript syntax checks.
-The game tests include an entire successful climb using normal movement and
-combat, terrain/dash collision, death/retry, guardian timing and save validation.
-For local static serving without Vercel's clean URLs, open /play.html.
+- Keyboard: WASD/arrows move, Space/J strikes, Shift/K dashes, Escape pauses.
+- Touch: left thumbstick, right strike and dash buttons; portrait and landscape.
+- Browser saves include the selected climber, current chapter, campaign/single
+  mode, per-level objectives, position/hearts, living enemy state, checkpoints,
+  elapsed time, deaths, completion history and best times. Continue resumes the
+  saved chapter. Replaying never removes a previously earned completion badge.
+- Saves use localStorage key `ikigai-mountain:game:journey:v2`. Existing Base Camp
+  v1 progress migrates without deleting the old key. Invalid v2 JSON is retained
+  under `:recovery`. Storage failures show an honest session-only notice. Saves
+  are specific to a browser/device/origin, without an account or cloud sync.
+- Saving happens on meaningful events, every two seconds while playing, on
+  pause, page hide and chapter changes. Newer saves in other chapters from
+  another tab are merged. A fallen player resumes safely at their checkpoint.
+- Dialogs pause gameplay. The field guide offers all 27 chapters and narration;
+  closing it stops audio. Hiding the page pauses the game. Sound is opt-in.
+- Art is drawn locally with Canvas2D. There are no external game dependencies,
+  new services or accounts. Reduced-motion preferences and safe-area insets are
+  respected; DOM menus remain keyboard accessible.
+
+`game/levels.mjs` defines the chapters and heroes; `game/engine.mjs` is the pure
+simulation; `game/progress.mjs` handles saves and migration; `game/art.mjs` draws
+terrain/sprites; `game/main.mjs` connects input, menus, narration and persistence.
+The chapter catalogue is generated directly from the authored story in app.js:
+run `node scripts/build-game-data.mjs` after changing that content.
+
+Checks: `node --test tests/game.test.mjs tests/text-foil.test.cjs`,
+`node scripts/build-game-data.mjs --check`, and JavaScript syntax checks.
+The tests exercise all chapters with ordinary movement and combat, objective
+rules, collision, guardians, character stats, saves, migration and replay.

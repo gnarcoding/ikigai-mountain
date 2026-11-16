@@ -1,26 +1,37 @@
-import { createGame, step, retry, readProgress, saveProgress, clamp } from './engine.mjs';
-import { Painter } from './art.mjs';
+import { createGame, step, retry } from './engine.mjs';
+import { Painter, drawHeroPortrait } from './art.mjs';
 import { CHAPTERS } from './chapters.mjs';
+import { LEVELS, HEROES, heroById } from './levels.mjs';
+import { loadJourney, recordGame, persistJourney, clearedCount, campaignNext } from './progress.mjs';
 
-const $=id=>document.getElementById(id);
-const canvas=$('gameCanvas'), painter=new Painter(canvas);
-const storageKey='ikigai-mountain:game:base-camp:v1';
-const dialogs=[...document.querySelectorAll('dialog')];
-let stored=null,storageAvailable=true;
-try{stored=readProgress(JSON.parse(localStorage.getItem(storageKey)));}catch{storageAvailable=false;}
-let game=createGame(),started=false,last=0,frame=0,soundOn=false,audioContext=null,manifest=null;
-let toastUntil=0,lastSave=0,returnToMap=false,guideIndex=0;
-let lastPaint=0;
-const keys=new Set(),touch={x:0,y:0,strike:false,dash:false};
+const $=id=>document.getElementById(id),canvas=$('gameCanvas'),painter=new Painter(canvas);
+let storage;try{storage=window.localStorage;}catch{storage=null;}
+const loaded=loadJourney(storage);let journey=loaded.journey,storageAvailable=loaded.status!=='unavailable';
+const dialogs=[...document.querySelectorAll('dialog')],keys=new Set(),touch={x:0,y:0,strike:false,dash:false};
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+let game=createGame(),started=false,last=0,frame=0,soundOn=false,audioContext=null,manifest=null;
+let toastUntil=0,lastSave=0,returnToMap=false,guideIndex=0,lastPaint=0,joystickPointer=null,pendingStart=null;
 const paused=()=>dialogs.some(d=>d.open);
+const put=(id,text)=>{if($(id).textContent!==text)$(id).textContent=text;};
 function resetInput(){keys.clear();joystickPointer=null;touch.x=touch.y=0;touch.strike=touch.dash=false;$('joystickKnob').style.transform='';}
-function save(){
-  stored=saveProgress(game);
-  try{localStorage.setItem(storageKey,JSON.stringify(stored));}
-  catch{if(storageAvailable)toast('Progress stays in this tab; device storage is unavailable.');storageAvailable=false;}
-}
 function toast(text){$('toast').textContent=text;$('toast').classList.add('visible');toastUntil=performance.now()+4200;}
+function save(){
+  if(started)recordGame(journey,game);
+  storageAvailable=persistJourney(storage,journey);
+  paintProgress();
+}
+function saveIfStarted(){if(started)save();}
+function paintProgress(){
+  const count=clearedCount(journey),hero=heroById(journey.heroId),record=journey.records[LEVELS[journey.currentLevel].id];
+  $('resumeButton').hidden=!record;
+  $('resumeButton').textContent='Continue · chapter '+String(journey.currentLevel+1).padStart(2,'0');
+  put('journeySummary',journey.chosen?hero.name+' · '+count+' / 27 chapters complete':'Four climbers. Twenty-seven chapters. Your own way up.');
+  put('progressSummary',count+' / 27 chapters complete');
+  $('journeyMeter').style.width=(count/27*100)+'%';
+  const status=storageAvailable?'Progress saves in this browser on this device.':'Browser saving is unavailable. Keep this tab open to retain this session.';
+  document.querySelectorAll('[data-save-status]').forEach(el=>{if(el.textContent!==status)el.textContent=status;});
+  $('savedHero').textContent=hero.name+' · '+hero.role;
+}
 function sound(type){
   if(!soundOn||!audioContext)return;
   if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
@@ -31,105 +42,144 @@ function sound(type){
 function toggleSound(){
   soundOn=!soundOn;
   if(soundOn&&!audioContext){try{audioContext=new (window.AudioContext||window.webkitAudioContext)();}catch{soundOn=false;toast('Game sound is unavailable in this browser.');}}
-  $('soundButton').textContent=soundOn?'Sound on':'Sound off';
-  $('soundButton').setAttribute('aria-pressed',String(soundOn));
-  $('soundButton').setAttribute('aria-label',soundOn?'Turn game sound off':'Turn game sound on');
-  if(soundOn)sound('heal');
+  $('soundButton').textContent=soundOn?'Sound on':'Sound off';$('soundButton').setAttribute('aria-pressed',String(soundOn));
+  $('soundButton').setAttribute('aria-label',soundOn?'Turn game sound off':'Turn game sound on');if(soundOn)sound('heal');
 }
-function openDialog(el){resetInput();el.showModal();saveIfStarted();}
-function saveIfStarted(){if(started)save();}
-for(const d of dialogs){
-  d.addEventListener('close',()=>{resetInput();last=0;if(d===$('guideDialog')){$('narration').pause();if(returnToMap){returnToMap=false;openDialog($('levelsDialog'));return;}}if(started&&!paused())canvas.focus({preventScroll:true});});
+function openDialog(el){resetInput();if(!el.open)el.showModal();saveIfStarted();}
+function closeDialogs(){returnToMap=false;dialogs.forEach(d=>{if(d.open)d.close();});}
+for(const d of dialogs)d.addEventListener('close',()=>{
+  resetInput();last=0;
+  if(d===$('guideDialog')){$('narration').pause();if(returnToMap){returnToMap=false;openDialog($('levelsDialog'));return;}}
+  if(started&&!paused())canvas.focus({preventScroll:true});
+});
+function choosePlayer(request){
+  pendingStart=request;closeDialogs();
+  for(const radio of $('heroChoices').querySelectorAll('input'))radio.checked=radio.value===journey.heroId;
+  openDialog($('playerDialog'));
 }
-function start(resume=false){
-  dialogs.forEach(d=>{if(d.open)d.close();});returnToMap=false;
-  game=createGame(resume?stored:null);started=true;resetInput();
+function requestStart(index,mode='single',options={}){
+  saveIfStarted();
+  const request={index,mode,resume:options.resume!==false};
+  if(options.pick||!journey.chosen)choosePlayer(request);else startLevel(request);
+}
+function startLevel({index,mode,resume=true}){
+  closeDialogs();const level=LEVELS[index];
+  const saved=resume?journey.records[level.id]?.progress:null;
+  game=createGame(saved,index,journey.heroId);journey.mode=mode;journey.currentLevel=index;started=true;resetInput();
+  // Consume the entry link so a reload offers the latest saved chapter.
+  const entryURL=new URL(location.href);entryURL.searchParams.delete('chapter');history.replaceState(null,'',entryURL);
   $('startScreen').hidden=true;$('gameCredit').hidden=true;$('hud').hidden=false;$('controlDeck').hidden=false;$('pauseButton').hidden=false;
-  document.body.classList.add('playing');painter.resize();canvas.focus({preventScroll:true});last=0;
-  toast(resume?'Welcome back. Your sparks are safe.':'Find three sparks. Move with WASD or the thumbstick. Strike to clear your path.');
-  save();paintHUD();
+  document.body.classList.add('playing');document.documentElement.style.setProperty('--gold',level.theme.accent);
+  painter.setLevel(level);painter.resize();last=0;save();paintHUD();
+  if(game.completed){game.status='won';finishScreen(true);return;}
+  put('briefKicker','CHAPTER '+String(index+1).padStart(2,'0')+' / 27 · '+level.theme.name.toUpperCase());
+  put('briefTitle',level.chapter.title);put('briefMission',level.objective);put('briefInstructions',level.instructions);
+  put('briefBoss','Guardian: '+level.bossName);
+  put('briefReflection','“'+level.chapter.voice+'”');
+  $('enterLevel').textContent=saved?'Resume this chapter ↗':'Enter this chapter ↗';
+  openDialog($('briefDialog'));
 }
 function paintHUD(){
-  const put=(id,text)=>{if($(id).textContent!==text)$(id).textContent=text;};
-  put('hearts','♥'.repeat(game.player.hp)+'♡'.repeat(5-game.player.hp));
-  const heartLabel=game.player.hp+' of 5 hearts';
-  if($('hearts').getAttribute('aria-label')!==heartLabel)$('hearts').setAttribute('aria-label',heartLabel);
-  $('dashMeter').style.width=((1-game.player.dashCooldown/1.1)*100)+'%';
-  const keeper=game.enemies.find(e=>e.type==='boss');
-  const objective=game.sparks.size<3?'Find your three sparks':keeper.hp>0?'Face the Doubtkeeper':'Light the summit beacon';
-  if($('objective').textContent!==objective)$('objective').textContent=objective;
-  put('sparkCount',game.sparks.size+' / 3 sparks');
-  put('regionLabel',{camp:'01 / BASE CAMP',grove:'02 / THE QUIET GROVE',heights:'03 / COURAGE HEIGHTS',guardian:'04 / THE FIRST ASCENT'}[game.zone]);
-  $('bossHud').hidden=game.zone!=='guardian'||keeper.hp<=0;
-  $('bossHealth').style.width=(keeper.hp/keeper.maxHp*100)+'%';
+  const {hero,level,player:p}=game,keeper=game.enemies.find(e=>e.type==='boss');
+  put('hearts','♥'.repeat(p.hp)+'♡'.repeat(hero.hp-p.hp));
+  const label=p.hp+' of '+hero.hp+' hearts';if($('hearts').getAttribute('aria-label')!==label)$('hearts').setAttribute('aria-label',label);
+  $('dashMeter').style.width=((1-p.dashCooldown/hero.dashCooldown)*100)+'%';
+  put('objective',game.sparks.size<level.goals.length?level.objective:keeper.hp>0?'Face '+level.bossName:'Light the beacon');
+  put('sparkCount',game.sparks.size+' / '+level.goals.length+' '+({collect:'sparks',rescue:'spirits',sequence:'runes',wardens:'sigils',beacons:'shrines'}[level.kind]));
+  put('regionLabel',String(level.index+1).padStart(2,'0')+' / '+level.theme.name.toUpperCase());
+  put('bossName',level.bossName.toUpperCase());
+  $('bossHud').hidden=game.zone!=='guardian'||keeper.hp<=0;$('bossHealth').style.width=(keeper.hp/keeper.maxHp*100)+'%';
   $('worldHint').hidden=game.zone!=='guardian'||keeper.hp<=0;
-  put('worldHint',keeper.phase==='warning'?'Glowing eyes. Dash out of the charge.':keeper.phase==='rest'?'The guardian is tired. Strike now.':'Watch. Dodge. Find your opening.');
-  put('controlTip',game.zone==='camp'?'Follow the gold trail. Walk into a spark to collect it.':game.zone==='grove'?'Wisps throw doubt. Dash through it, or strike close.':game.zone==='heights'?'Thornlings pause before they lunge. Use the opening.':'Your courage is stronger than your doubt.');
+  put('worldHint',keeper.phase==='warning'?(keeper.attack==='stomp'?'Leave the glowing circle.':keeper.attack==='charge'?'Dash out of the charge.':'A volley is coming. Keep moving.'):keeper.phase==='rest'?'Your opening. Strike now.':'Watch. Dodge. Find your opening.');
+  put('controlTip',level.instructions+' '+(level.hazards.length?'Glowing ground hurts; brambles slow you down.':''));
 }
 function finishScreen(won){
-  $('endKicker').textContent=won?'THE FIRST STEP IS YOURS':'REST. THEN TRY AGAIN.';
-  $('endTitle').textContent=won?'You kept the spark.':'A stumble is not the end.';
-  $('endMessage').textContent=won?'You don’t have to be good at it yet. Loving it is enough to start. The next chapter is The Beautiful Thing No One Asked For.':'Your sparks are safe. Catch your breath and return to your last checkpoint with full hearts.';
-  $('endStats').textContent=won?game.sparks.size+' sparks · '+Math.floor(game.seconds/60)+'m '+Math.floor(game.seconds%60)+'s · '+game.defeated.size+' doubts overcome':(game.checkpoint==='gate'?'Upper gate':'Base Camp')+' checkpoint · '+game.sparks.size+' / 3 sparks kept';
-  $('endAction').textContent=won?'Read / listen to the next stop ↗':'Return to checkpoint ↗';
-  $('replayButton').hidden=!won;openDialog($('endDialog'));
+  const index=game.level.index,final=index===26,count=clearedCount(journey);
+  put('endKicker',won?(final?'THE SUMMIT · A REASON FOR BEING':'CHAPTER '+String(index+1).padStart(2,'0')+' COMPLETE'):'REST. THEN TRY AGAIN.');
+  put('endTitle',won?(final?'You reached Ikigai.':'A little higher. A little wiser.'):'A stumble is not the end.');
+  put('endMessage',won?game.level.chapter.question:'Your objectives are safe. Return to your checkpoint with full hearts.');
+  put('endStats',won?Math.floor(game.seconds/60)+'m '+Math.floor(game.seconds%60)+'s · '+game.defeated.size+' doubts overcome · '+count+' / 27 chapters complete':(game.checkpoint==='gate'?'Upper gate':'Trailhead')+' checkpoint · '+game.sparks.size+' / '+game.level.goals.length+' objectives kept');
+  put('endAction',won?(final?'Explore the mountain again ↗':journey.mode==='campaign'?'Next chapter ↗':'Choose another chapter ↗'):'Return to checkpoint ↗');
+  $('replayButton').hidden=!won;$('endReadButton').hidden=!won;openDialog($('endDialog'));
 }
 $('endDialog').addEventListener('cancel',e=>e.preventDefault());
 $('endAction').addEventListener('click',()=>{
-  const won=game.status==='won';$('endDialog').close();
-  if(won)showGuide(1);else{game=retry(game);paintHUD();toast('You still have your sparks. Keep climbing.');}
+  if(game.status==='fallen'){closeDialogs();game=retry(game);save();paintHUD();canvas.focus({preventScroll:true});return;}
+  const next=campaignNext(journey,game.level.index);closeDialogs();
+  if(journey.mode==='campaign'&&next!==null)requestStart(next,'campaign',{resume:true});
+  else{renderChapters();openDialog($('levelsDialog'));}
 });
-$('replayButton').addEventListener('click',()=>start(false));
-$('startButton').addEventListener('click',()=>start(false));
-$('resumeButton').hidden=!stored;
-$('resumeButton').textContent=stored?.complete?'Revisit your completed climb':'Continue your climb';
-$('resumeButton').addEventListener('click',()=>start(true));
+$('endReadButton').addEventListener('click',()=>{closeDialogs();showGuide(game.level.index);});
+$('replayButton').addEventListener('click',()=>requestStart(game.level.index,journey.mode,{resume:false}));
+$('startButton').addEventListener('click',()=>requestStart(0,'campaign',{pick:true,resume:true}));
+$('resumeButton').addEventListener('click',()=>requestStart(journey.currentLevel,journey.mode,{resume:true}));
 $('pauseButton').addEventListener('click',()=>openDialog($('pauseDialog')));
-$('restartButton').addEventListener('click',()=>start(false));
+$('restartButton').addEventListener('click',()=>requestStart(game.level.index,journey.mode,{resume:false}));
+$('changePlayerButton').addEventListener('click',()=>requestStart(game.level.index,journey.mode,{pick:true,resume:true}));
 $('soundButton').addEventListener('click',toggleSound);
-$('playChapter').addEventListener('click',()=>{if(started&&game.status==='playing'){$('levelsDialog').close();}else start(!!stored&&!stored.complete);});
+$('playChapter').addEventListener('click',()=>requestStart(0,'campaign',{resume:true}));
 $('levelsButton').addEventListener('click',()=>{renderChapters();openDialog($('levelsDialog'));});
 $('closeLevels').addEventListener('click',()=>$('levelsDialog').close());
-$('guideButton').addEventListener('click',()=>showGuide(0));
+$('guideButton').addEventListener('click',()=>showGuide(started?game.level.index:0));
 $('closeGuide').addEventListener('click',()=>$('guideDialog').close());
+$('closePlayer').addEventListener('click',()=>$('playerDialog').close());
+$('enterLevel').addEventListener('click',()=>{$('briefDialog').close();toast(game.level.instructions);});
+$('briefMap').addEventListener('click',()=>{closeDialogs();renderChapters();openDialog($('levelsDialog'));});
+$('briefDialog').addEventListener('cancel',e=>{e.preventDefault();$('briefMap').click();});
+for(const hero of HEROES){
+  const label=document.createElement('label');label.className='hero-card';
+  const radio=document.createElement('input');radio.type='radio';radio.name='hero';radio.value=hero.id;radio.checked=hero.id===journey.heroId;
+  const portrait=document.createElement('canvas');portrait.setAttribute('aria-hidden','true');
+  const name=document.createElement('strong');name.textContent=hero.name;
+  const role=document.createElement('span');role.className='hero-role';role.textContent=hero.role;
+  const description=document.createElement('span');description.className='hero-description';description.textContent=hero.description;
+  const trait=document.createElement('small');trait.textContent=hero.trait;
+  label.append(radio,portrait,name,role,description,trait);$('heroChoices').append(label);drawHeroPortrait(portrait,hero.id);
+}
+$('confirmPlayer').addEventListener('click',()=>{
+  const selected=$('heroChoices').querySelector('input:checked');if(!selected)return;
+  journey.heroId=selected.value;journey.chosen=true;
+  // Persist the choice before a new run exists; do not overwrite it with the old hero.
+  storageAvailable=persistJourney(storage,journey);paintProgress();
+  startLevel(pendingStart||{index:0,mode:'campaign',resume:true});pendingStart=null;
+});
 
 function showGuide(index,fromMap=false){
-  guideIndex=index;const chapter=CHAPTERS[index];
-  if(!chapter)return;
+  guideIndex=index;const chapter=CHAPTERS[index];if(!chapter)return;
   returnToMap=false;if($('levelsDialog').open)$('levelsDialog').close();returnToMap=fromMap;
-  $('guideKicker').textContent='FIELD GUIDE · STOP '+String(index+1).padStart(2,'0');
-  $('guideTitle').textContent=chapter.title;
-  $('guideVoice').textContent='“'+chapter.voice+'”';
-  $('guideFeels').textContent=chapter.feels;$('guideThrough').textContent=chapter.through;$('guideQuestion').textContent=chapter.question;
+  put('guideKicker','FIELD GUIDE · STOP '+String(index+1).padStart(2,'0'));put('guideTitle',chapter.title);
+  put('guideVoice','“'+chapter.voice+'”');put('guideFeels',chapter.feels);put('guideThrough',chapter.through);put('guideQuestion',chapter.question);
   $('readingLink').href='/?stop='+encodeURIComponent(index===0?'trailhead':chapter.id);
-  setNarration(chapter);if(!$('guideDialog').open)openDialog($('guideDialog'));
+  setNarration(chapter);openDialog($('guideDialog'));
 }
 function setNarration(chapter){
-  const track=manifest?.sections?.[chapter.id];const audio=$('narration');audio.pause();
-  // Only the self-hosted filenames from this repository's manifest are used.
+  const track=manifest?.sections?.[chapter.id],audio=$('narration');audio.pause();
   const available=track&&/^[a-z0-9-]+\.mp3$/.test(track.file);
   audio.hidden=!available;$('audioUnavailable').hidden=!!available;
   if(available)audio.src='/audio/'+track.file;else{audio.removeAttribute('src');audio.load();}
 }
 fetch('/audio/manifest.json').then(r=>r.ok?r.json():null).then(m=>{manifest=m;if($('guideDialog').open)setNarration(CHAPTERS[guideIndex]);}).catch(()=>{});
 function renderChapters(face='all'){
-  $('mapFilter').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.face===face)));
+  paintProgress();$('mapFilter').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.face===face)));
   const list=$('chapterList');list.replaceChildren();
-  CHAPTERS.forEach((chapter,index)=>{
-    if(face!=='all'&&chapter.face!==face)return;
-    const card=document.createElement('article');card.className='chapter-card'+(index===0?' ready':'');
-    const number=document.createElement('span');number.className='chapter-number';number.textContent=String(index+1).padStart(2,'0');
-    const content=document.createElement('div'),title=document.createElement('h3'),note=document.createElement('p'),button=document.createElement('button');
-    title.textContent=chapter.title;note.textContent=index===0?(stored?.complete?'Level complete · play again':'Playable now · chapter one'):'Story available · game level to come';
-    button.textContent='Read / listen ↗';button.addEventListener('click',()=>showGuide(index,true));
-    content.append(title,note,button);card.append(number,content);list.append(card);
-  });
+  for(const level of LEVELS){
+    const chapter=level.chapter,index=level.index,record=journey.records[level.id];
+    if(face!=='all'&&chapter.face!==face)continue;
+    const card=document.createElement('article');card.className='chapter-card ready'+(record?.cleared?' completed':'');
+    card.style.setProperty('--chapter-color',level.theme.accent);
+    const number=document.createElement('span');number.className='chapter-number';number.textContent=record?.cleared?'✓':String(index+1).padStart(2,'0');
+    const content=document.createElement('div'),title=document.createElement('h3'),note=document.createElement('p'),actions=document.createElement('div');actions.className='chapter-actions';
+    title.textContent=chapter.title;
+    note.textContent=(record?.cleared?'Complete · ':record?'In progress · ':'')+level.theme.name+' · '+({collect:'Collect',rescue:'Rescue',sequence:'Rune puzzle',wardens:'Guardian trial',beacons:'Shrine quest'}[level.kind]);
+    const play=document.createElement('button');play.textContent=record?.cleared?'Replay level ↗':record?'Continue level ↗':'Play level ↗';
+    play.addEventListener('click',()=>requestStart(index,'single',{resume:!record?.cleared}));
+    const read=document.createElement('button');read.textContent='Read / listen';read.addEventListener('click',()=>showGuide(index,true));
+    actions.append(play,read);content.append(title,note,actions);
+    if(record?.bestSeconds){const best=document.createElement('small');best.className='best-time';best.textContent='Best climb: '+Math.floor(record.bestSeconds/60)+'m '+Math.floor(record.bestSeconds%60)+'s';content.append(best);}
+    card.append(number,content);list.append(card);
+  }
 }
-$('mapFilter').addEventListener('click',e=>{
-  const button=e.target.closest('button[data-face]');if(!button)return;
-  $('mapFilter').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
-  renderChapters(button.dataset.face);
-});
+$('mapFilter').addEventListener('click',e=>{const b=e.target.closest('button[data-face]');if(b)renderChapters(b.dataset.face);});
 function keyInput(e,down){
   if(e.code==='Escape'&&down&&started&&!paused()){e.preventDefault();openDialog($('pauseDialog'));return;}
   if(!started||paused()||game.status!=='playing')return;
@@ -147,7 +197,7 @@ document.addEventListener('visibilitychange',()=>{
 });
 window.addEventListener('pagehide',saveIfStarted);
 
-let joystickPointer=null;
+
 const joystick=$('joystick');
 function moveStick(e){
   if(e.pointerId!==joystickPointer)return;
@@ -173,23 +223,22 @@ function loop(now){
     const x=touch.x+(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0);
     const y=touch.y+(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0);
     step(game,{x,y,strike:touch.strike||keys.has('Space')||keys.has('KeyJ'),dash:touch.dash||keys.has('ShiftLeft')||keys.has('ShiftRight')||keys.has('KeyK')},dt);
-    for(const event of game.events.splice(0)){
-      if(event.text)toast(event.text);sound(event.type);
-      if(event.type==='save')save();
-      if(event.type==='won'||event.type==='fallen')finishScreen(event.type==='won');
-    }
-    if(now-lastSave>10000){lastSave=now;save();}
-    paintHUD();
+    const events=game.events.splice(0);
+    // Save the win before its completion screen reports the campaign count.
+    if(events.some(e=>e.type==='save'))save();
+    for(const event of events){if(event.text)toast(event.text);sound(event.type);if(event.type==='won'||event.type==='fallen')finishScreen(event.type==='won');}
+    if(now-lastSave>2000){lastSave=now;save();}paintHUD();
   }
-  // Menus and narration do not need a continuously repainted world behind them.
-  if((!paused()&&(started||!reduced.matches))||now-lastPaint>500){
-    painter.draw(game,now/1000,!started,reduced.matches);lastPaint=now;
-  }
+  if((!paused()&&(started||!reduced.matches))||now-lastPaint>500){painter.draw(game,now/1000,!started,reduced.matches);lastPaint=now;}
   if(toastUntil&&now>toastUntil){$('toast').classList.remove('visible');toastUntil=0;}
   frame=requestAnimationFrame(loop);
 }
-new ResizeObserver(()=>painter.resize()).observe(canvas);
-painter.resize();frame=requestAnimationFrame(loop);
-renderChapters();
+new ResizeObserver(()=>painter.resize()).observe(canvas);painter.resize();frame=requestAnimationFrame(loop);
+paintProgress();renderChapters();
+if(loaded.status==='recovered')toast('The previous save could not be read. A recovery copy was kept in this browser.');
 const selected=new URLSearchParams(location.search).get('chapter');
-if(selected){const index=CHAPTERS.findIndex(c=>c.id===selected);if(index>0)showGuide(index);else if(selected==='map')openDialog($('levelsDialog'));}
+if(selected){
+  const index=CHAPTERS.findIndex(c=>c.id===selected);
+  if(index>=0)requestStart(index,'single',{resume:true});
+  else if(selected==='map')openDialog($('levelsDialog'));
+}

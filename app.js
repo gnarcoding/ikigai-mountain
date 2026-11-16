@@ -839,7 +839,7 @@
           d.signs.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ul></div>" +
         '<div class="through"><h3>' + esc(d.throughLabel || "The way through") + "</h3><p>" + esc(d.through) + "</p></div>" +
         '<p class="carry"><span>Carry this up</span>' + esc(d.question) + "</p>" +
-        (st.kind === "trailhead" && startIdx !== 0 ? "" : '<a class="chapter-game-link" href="/play?chapter=' + (st.kind === "trailhead" ? "trailhead-love" : st.id) + '">' + (st.kind === "trailhead" ? "Play this chapter ↗" : "Explore this chapter in the adventure ↗") + '</a>') +
+        (st.kind === "trailhead" && startIdx !== 0 ? "" : '<a class="chapter-game-link" href="/play?chapter=' + (st.kind === "trailhead" ? "trailhead-love" : st.id) + '">' + "Play this chapter ↗" + '</a>') +
         "</li>";
     }).join("");
 

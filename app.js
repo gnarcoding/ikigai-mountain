@@ -925,8 +925,8 @@
   var obstacles = [];
   function measureTag() {
     var sr = stageEl.getBoundingClientRect();
-    obstacles = [".stage-tag", ".viewbar", ".journal-btn"].map(function (sel) {
-      var t = stageEl.querySelector(sel);
+    obstacles = [".stage-tag", ".viewbar", ".journal-btn", "#bookTag:not(.out)"].map(function (sel) {
+      var t = document.querySelector(sel);
       if (!t || !t.offsetWidth) return null;
       var r = t.getBoundingClientRect();
       return { x: r.left - sr.left, y: r.top - sr.top, w: r.width, h: r.height };
@@ -2508,6 +2508,7 @@
     if (!nudgeEl || nudgeState.shown || nudgeState.done || nudgeIsQuiet()) return;
     nudgeState.shown = true;
     nudgeEl.hidden = false;
+    updateBookTag();
     requestAnimationFrame(function () { requestAnimationFrame(function () { nudgeEl.classList.add("in"); }); });
   }
   function hideNudge() {
@@ -2515,6 +2516,8 @@
     nudgeState.done = true;
     nudgeEl.classList.remove("in");
     setTimeout(function () { nudgeEl.hidden = true; }, reduceMotion ? 0 : 320);
+    // The booking tag comes back as the nudge leaves.
+    setTimeout(updateBookTag, reduceMotion ? 0 : 180);
   }
   function maybeNudge() {
     if (!nudgeEl || nudgeState.done) return;
@@ -2531,6 +2534,45 @@
   if (nudgeEl) {
     document.getElementById("nudgeLater").addEventListener("click", function () { nudgeQuiet(); hideNudge(); });
   }
+  /* ---------- The booking tag ---------- */
+  // Pinned the whole way down, so closing the nudge never means scrolling to
+  // the end to book. It steps aside while the nudge is up, and while one of
+  // the page's own "Book an hour" links is on screen, so there's never two.
+  var bookTag = document.getElementById("bookTag");
+  var bookLinksInView = new Set();
+  var bookObserver = null, bookWatchTimer = 0;
+  function updateBookTag() {
+    if (!bookTag) return;
+    var out = (nudgeState.shown && !nudgeState.done) || bookLinksInView.size > 0;
+    if (bookTag.classList.contains("out") === out) return;
+    bookTag.classList.toggle("out", out);
+    measureTag();
+  }
+  function watchBookLinks() {
+    if (!bookTag) return;
+    if (!window.IntersectionObserver) { bookTag.classList.remove("out"); return; }
+    if (bookObserver) bookObserver.disconnect();
+    bookLinksInView.clear();
+    // On phones the top of the screen is the mountain; a link behind it isn't on screen.
+    var wrap = document.querySelector(".stage-wrap");
+    var top = isNarrow() && wrap ? Math.round(wrap.getBoundingClientRect().height) : 0;
+    bookObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) bookLinksInView.add(en.target);
+        else bookLinksInView.delete(en.target);
+      });
+      updateBookTag();
+    }, { rootMargin: "-" + top + "px 0px 0px 0px" });
+    document.querySelectorAll('.story a[href="/book"]').forEach(function (a) { bookObserver.observe(a); });
+  }
+  if (bookTag) {
+    watchBookLinks();
+    window.addEventListener("resize", function () {
+      clearTimeout(bookWatchTimer);
+      bookWatchTimer = setTimeout(watchBookLinks, 200);
+    });
+  }
+
   // Anyone who heads to the booking page from anywhere here has seen the offer.
   document.addEventListener("click", function (e) {
     var a = e.target.closest && e.target.closest('a[href="/book"]');
@@ -2697,8 +2739,10 @@
   function sizePlayer() {
     var story = document.getElementById("story");
     if (story) document.documentElement.style.setProperty("--story-w", story.getBoundingClientRect().width + "px");
+    if (playerEl && !playerEl.hidden) document.documentElement.style.setProperty("--player-h", playerEl.offsetHeight + "px");
   }
   window.addEventListener("resize", sizePlayer);
+  if (playerEl && window.ResizeObserver) new ResizeObserver(sizePlayer).observe(playerEl);
 
   function playStop(st) {
     var a = audioFor(st);

@@ -1096,6 +1096,52 @@ body.has-player .story { padding-bottom: 150px; }
 @media (prefers-reduced-motion: reduce) {
   .nudge { transition: none; transform: none; }
 }
+
+/* ---------- Booking tag ---------- */
+/* Pinned the whole way down. Sits where the nudge sits, and steps aside while
+   the nudge or one of the page's own booking links is on screen. */
+.book-tag {
+  position: fixed;
+  right: 24px;
+  bottom: calc(136px + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 4px 15px 4px 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(10, 14, 24, 0.16);
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity .28s ease, transform .28s ease, box-shadow .2s ease, visibility 0s;
+}
+.book-tag:hover { box-shadow: 0 10px 28px rgba(10, 14, 24, 0.24); transform: translateY(-1px); }
+.book-tag:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.book-tag-avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+.book-tag-price { font-weight: 500; color: var(--ink-soft); }
+.book-tag-price::before { content: "·"; margin-right: 7px; }
+.book-tag.out {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity .28s ease, transform .28s ease, visibility 0s .28s;
+}
+@media (max-width: 900px) {
+  .book-tag { right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+  /* Rides just above the narration player while it's open. */
+  body.has-player .book-tag { bottom: calc(var(--player-h, 120px) + 20px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .book-tag, .book-tag.out, .book-tag:hover { transform: none; }
+}
+@media print { .book-tag { display: none; } }
 .nojs { margin: 0 0 24px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; }
 
 </style>
@@ -1194,6 +1240,11 @@ body.has-player .story { padding-bottom: 150px; }
     </section>
   </main>
 </div>
+
+<a class="book-tag out" id="bookTag" href="/book" aria-label="Book an hour with Eric, $100">
+  <img class="book-tag-avatar" src="/img/eric-96.webp" srcset="/img/eric-96.webp 96w, /img/eric-192.webp 192w" sizes="30px" width="30" height="30" alt="">
+  <span>Book an hour</span><span class="book-tag-price">$100</span>
+</a>
 
 <aside class="nudge" id="nudge" hidden aria-labelledby="nudgeTitle">
   <img class="nudge-avatar" src="/img/eric-96.webp" srcset="/img/eric-96.webp 96w, /img/eric-192.webp 192w" sizes="44px" width="44" height="44" alt="Eric">

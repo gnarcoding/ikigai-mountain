@@ -1,4 +1,5 @@
 import { LEVELS, heroById } from './levels.mjs';
+import { rankFor } from './encounters.mjs';
 import { readProgress, saveProgress } from './engine.mjs';
 export const SAVE_KEY='ikigai-mountain:game:journey:v2';
 export const LEGACY_KEY='ikigai-mountain:game:base-camp:v1';
@@ -12,6 +13,7 @@ export function normalizeJourney(raw){
     const record=raw.records?.[level.id];if(!record)continue;
     const progress=readProgress(record.progress,level.index);if(!progress)continue;
     j.records[level.id]={progress,cleared:record.cleared===true||progress.complete,
+      bestRank:['gold','silver','bronze'].includes(record.bestRank)?record.bestRank:null,bestScore:Number.isFinite(record.bestScore)?Math.max(0,record.bestScore):0,
       bestSeconds:Number.isFinite(record.bestSeconds)&&record.bestSeconds>0?record.bestSeconds:null,
       updatedAt:Number.isFinite(record.updatedAt)?record.updatedAt:0};
   }
@@ -36,6 +38,7 @@ export function loadJourney(storage){
 export function recordGame(journey,g,now=Date.now()){
   const id=g.level.id,old=journey.records[id];
   journey.records[id]={progress:saveProgress(g),cleared:!!old?.cleared||g.completed,
+    bestRank:g.completed?['gold','silver','bronze'].find(r=>r===rankFor(g)||r===old?.bestRank):old?.bestRank||null,bestScore:Math.max(old?.bestScore||0,g.completed?g.challenge.score:0),
     bestSeconds:g.completed?Math.min(old?.bestSeconds||Infinity,g.seconds):old?.bestSeconds||null,updatedAt:now};
   journey.heroId=g.hero.id;journey.currentLevel=g.level.index;journey.updatedAt=now;
   return journey;
@@ -49,7 +52,7 @@ export function persistJourney(storage,journey){
       if(!b)continue;
       const selected=!a||b.updatedAt>a.updatedAt?b:a;
       if(a){
-        selected.cleared=a.cleared||b.cleared;
+        selected.cleared=a.cleared||b.cleared;selected.bestRank=['gold','silver','bronze'].find(r=>r===a.bestRank||r===b.bestRank)||null;selected.bestScore=Math.max(a.bestScore||0,b.bestScore||0);
         const best=Math.min(a.bestSeconds||Infinity,b.bestSeconds||Infinity);
         selected.bestSeconds=Number.isFinite(best)?best:null;
       }

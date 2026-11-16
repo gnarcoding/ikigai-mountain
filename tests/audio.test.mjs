@@ -48,6 +48,6 @@ test('effects are distinct, rate limited, muted independently and release audio 
 test('all notes and effects create finite envelopes and bounded voices',async()=>{
  const {a,c}=instrument();a.setChapter(LEVELS[26]);await a.unlock();
  for(const e of a.score.events.slice(0,100)){a.note(e,c.currentTime+.01,60/a.score.bpm);for(const n of [...a.nodes])n.source.onended();c.currentTime+=.05;}
- for(const type of ['strike','hit','dash','hurt','step','heal','spark','defeat','warning','gate','guardian','won','fallen','zone','select']){a.effect(type,{x:300});assert.ok(a.nodes.size<40);for(const n of [...a.nodes])n.source.onended();c.currentTime+=1;}
+ for(const type of ['strike','hit','dash','hurt','step','heal','spark','defeat','warning','gate','guardian','won','fallen','zone','select','rune','parry','boost','miss','power','finisher','powerhit','impact']){a.effect(type,{x:300});assert.ok(a.nodes.size<40);for(const n of [...a.nodes])n.source.onended();c.currentTime+=1;}
  a.dispose();
 });

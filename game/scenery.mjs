@@ -39,6 +39,7 @@ export function paintTerrain(c,l){
   }
  }
  for(const s of l.stairs){
+  if(s.y>l.height)continue;
   rect(c,32,s.y+54,896,24,'#061b283d');rect(c,32,s.y,896,64,t.cliff);
   for(let x=32;x<928;x+=30){const n=noise(x,s.y);poly(c,[[x,s.y+7],[x+29,s.y+12],[x+26,s.y+56],[x+8,s.y+62],[x,s.y+45]],n>.5?t.cliffFace:t.cliff);rect(c,x+3,s.y+12,2,34,'#e9efd422');line(c,[[x+8,s.y+19],[x+22,s.y+24],[x+16,s.y+32]],1,'#09233066');}
   rect(c,32,s.y-6,896,11,t.ground);rect(c,32,s.y+2,896,3,t.edge);rect(c,32,s.y+6,896,3,t.light+'66');

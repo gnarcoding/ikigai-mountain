@@ -93,6 +93,13 @@ export class MountainAudio {
   const chime=(notes,spacing=.09,volume=.16)=>notes.forEach((n,i)=>v({at:at+i*spacing,frequency:midiHz(n),duration:.62,volume,type:'sine'}));
   const root=this.score?.root||50;
   switch(type){
+   case 'rune':chime([root+24,root+31],.05,.13);break;
+   case 'parry':chime([root+31,root+36],.04,.18);v({noise:true,filter:4500,duration:.07,volume:.12});break;
+   case 'boost':v({frequency:350,endFrequency:1100,duration:.22,volume:.11});break;
+   case 'miss':v({frequency:180,endFrequency:90,duration:.18,volume:.12});break;
+   case 'power':chime([root,root+12,root+19,root+24],.06,.23);v({frequency:65,endFrequency:30,duration:.45,volume:.35});break;
+   case 'finisher':v({noise:true,filter:2000,duration:.22,volume:.2});v({frequency:350,endFrequency:80,duration:.2,volume:.17});break;
+   case 'powerhit':case 'impact':v({noise:true,filter:800,duration:.18,volume:.19});break;
    case 'strike':v({noise:true,filter:2400,highpass:true,duration:.12,volume:.14});v({frequency:560,endFrequency:150,duration:.11,volume:.07,type:'triangle'});break;
    case 'hit':v({noise:true,filter:2400,duration:.065,volume:.22});v({frequency:220,endFrequency:65,duration:.13,volume:.18,type:'triangle'});break;
    case 'dash':v({noise:true,filter:1100,duration:.26,volume:.2,attack:.05});v({frequency:300,endFrequency:900,duration:.18,volume:.055});break;

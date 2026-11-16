@@ -115,7 +115,7 @@ the beacon. The final chapter brings together all four faces of the mountain.
   pause, page hide and chapter changes. Newer saves in other chapters from
   another tab are merged. A fallen player resumes safely at their checkpoint.
 - Dialogs pause gameplay. The field guide offers all 27 chapters and narration;
-  closing it stops audio. Hiding the page pauses the game. Sound is opt-in.
+  closing it stops audio. Hiding the page pauses the game. Audio starts only after a user interaction; music and effects can be muted independently.
 - Art is drawn locally with Canvas2D. There are no external game dependencies,
   new services or accounts. Reduced-motion preferences and safe-area insets are
   respected; DOM menus remain keyboard accessible.
@@ -126,7 +126,46 @@ terrain/sprites; `game/main.mjs` connects input, menus, narration and persistenc
 The chapter catalogue is generated directly from the authored story in app.js:
 run `node scripts/build-game-data.mjs` after changing that content.
 
-Checks: `node --test tests/game.test.mjs tests/text-foil.test.cjs`,
+Checks: `node --test tests/game.test.mjs tests/audio.test.mjs tests/text-foil.test.cjs`,
 `node scripts/build-game-data.mjs --check`, and JavaScript syntax checks.
 The tests exercise all chapters with ordinary movement and combat, objective
 rules, collision, guardians, character stats, saves, migration and replay.
+
+
+### Music, holographic lettering and visual effects
+
+Every chapter has an original 16-bar composition in `game/score.mjs`, with a
+chapter-specific title, key, melody, tempo and arrangement. `game/audio.mjs`
+synthesizes plucked tones, bells/glass, pads, bass and percussion locally using
+Web Audio. A separate guardian layer joins the current phrase during battle.
+Sword swishes, impacts, dashes, footsteps, pickups, healing, gate unlocks,
+guardian warnings and victory/failure cues use independent effect envelopes.
+There are no streamed tracks, licensed samples or additional dependencies.
+
+The Audio button opens Light & sound settings. Music/effects have independent
+mute switches and volumes, remembered under `ikigai-mountain:audio:v1`.
+The audio context is created only after an interaction. Menus duck the music;
+narration mutes it; hidden pages suspend it and stop the scheduler. A compressor,
+limited voice count and per-effect rate limits control overlapping combat audio.
+The scheduler drops stale backlogs after browser throttling and fades old
+chapter voices when switching levels.
+
+Game titles, chapter names, player names and objectives use the existing
+text-only foil shader and pointer/phone-tilt controller. Permission-based iOS
+tilt remains behind the Enable tilt shimmer button in Light & sound. Mouse and
+touch remain fallbacks; reduced-motion and forced-color modes keep text legible.
+
+`game/scenery.mjs` caches carved terrain, path stones, cliff facets and vegetation.
+The renderer adds cached canopy sprites with viewport culling, water ripples,
+fireflies/dust/snow, light shafts and mist, shrine light, guardian courts,
+sword arcs, dash afterimages, projectile trails and impact rings. Decorative
+screen shake is bounded and is disabled with reduced motion or the Cinematic
+effects setting. Cosmetic art does not change collisions or saved gameplay.
+
+Browser checks can be run from `/tests/av-preview.html` in a local static preview.
+It renders isolated scenes for all six environments and measures per-frame draw
+cost; its audio check renders the actual Web Audio graph for all 27 scores with
+combat effects, verifies finite/non-silent output and checks for clipping. It
+never reads or writes player progress. Automated audio tests cover deterministic
+scores, settings, context lifetime, ducking, hiding, scheduling, guardian layers,
+chapter transitions, effect limits and audio-node cleanup.

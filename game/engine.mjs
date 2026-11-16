@@ -48,7 +48,7 @@ export function saveProgress(g){
     position:g.status==='fallen'?null:{x:g.player.x,y:g.player.y,hp:g.player.hp,face:g.player.face},
     enemies:g.status==='fallen'?[]:g.enemies.filter(e=>e.hp>0).map(e=>({id:e.id,hp:e.hp,x:e.x,y:e.y}))};
 }
-export function emit(g,type,text=''){g.events.push({type,text});}
+export function emit(g,type,text='',data={}){g.events.push({type,text,...data});}
 function circleRect(x,y,r,b){return Math.hypot(x-clamp(x,b.x,b.x+b.w),y-clamp(y,b.y,b.y+b.h))<r;}
 export function blocked(g,x,y,r=12){
   const l=g.level;
@@ -72,7 +72,7 @@ function burst(g,x,y,color,count=10){
 export function claim(g,s){
   if(g.sparks.has(s.id))return;
   g.sparks.add(s.id);g.player.hp=Math.min(g.hero.hp,g.player.hp+1);burst(g,s.x,s.y,g.level.theme.accent,20);
-  emit(g,'spark',s.name+' · '+g.sparks.size+' of '+g.level.goals.length);emit(g,'save');
+  emit(g,'spark',s.name+' · '+g.sparks.size+' of '+g.level.goals.length,{x:s.x,y:s.y});emit(g,'save');
   if(g.sparks.size===g.level.goals.length){g.checkpoint='gate';g.player.hp=g.hero.hp;emit(g,'gate','The upper gate is open. Your checkpoint is saved.');emit(g,'save');}
 }
 export function strike(g){
@@ -96,10 +96,10 @@ export function strike(g){
     if(Math.cos(a-p.face)<.1||blocked(g,(e.x+p.x)/2,(e.y+p.y)/2,2))continue;
     e.hp--;e.flash=.15;
     if(e.type!=='boss')move(g,e,Math.cos(a)*(e.type==='beetle'?10:24),Math.sin(a)*(e.type==='beetle'?10:24));
-    burst(g,e.x,e.y,'#f7d98c',7);emit(g,'hit');
+    burst(g,e.x,e.y,'#f7d98c',7);emit(g,'hit','',{x:e.x,y:e.y});
     if(e.hp<=0){
       g.defeated.add(e.id);burst(g,e.x,e.y,g.level.theme.accent,20);
-      if(e.type==='boss'){g.projectiles=[];emit(g,'guardian',g.level.bossName+' is quiet. Light the beacon.');}
+      if(e.type==='boss'){g.projectiles=[];emit(g,'guardian',g.level.bossName+' is quiet. Light the beacon.',{x:e.x,y:e.y});}
       else{g.hearts.push({x:e.x,y:e.y});emit(g,'defeat');}
       emit(g,'save');
     }
@@ -144,7 +144,7 @@ function updateBoss(g,e,dt){
   }else if(d<360&&e.cooldown<=0){
     e.attack=e.pattern==='cycle'?['charge','volley','stomp','ring'][e.cycle%4]:e.pattern;
     e.cycle++;e.phase='warning';e.timer=e.attack==='stomp'?1:.85;
-    e.vx=Math.cos(a)*300;e.vy=Math.sin(a)*300;e.targetX=p.x;e.targetY=p.y;
+    e.vx=Math.cos(a)*300;e.vy=Math.sin(a)*300;e.targetX=p.x;e.targetY=p.y;emit(g,'warning','',{x:e.x,y:e.y});
   }else if(d>75)move(g,e,Math.cos(a)*dt*30,Math.sin(a)*dt*30);
 }
 export function step(g,input,dt){

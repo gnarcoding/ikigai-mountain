@@ -8,12 +8,12 @@ export const HEROES = [
 ];
 export const heroById=id=>HEROES.find(h=>h.id===id)||HEROES[0];
 export const THEMES = {
-  forest:{name:'The living forest',ground:'#638354',fleck:'#526f4c',light:'#a1ac6d',cliff:'#405e46',cliffFace:'#526b4f',edge:'#aec07a',path:'#c5b585',tree:'#386a45',water:'#367f78',accent:'#f7cc79',sky:'#204b49'},
-  ruins:{name:'The blue stone ruins',ground:'#667f89',fleck:'#536974',light:'#a3b3af',cliff:'#394e62',cliffFace:'#526776',edge:'#a9bdbb',path:'#c2c8b2',tree:'#4b7279',water:'#44788f',accent:'#afe3ed',sky:'#203747'},
-  marsh:{name:'The lantern wetlands',ground:'#487e70',fleck:'#336658',light:'#87ad89',cliff:'#214f49',cliffFace:'#38695b',edge:'#9ab99a',path:'#b9b58d',tree:'#397b67',water:'#2a596a',accent:'#9ae1cb',sky:'#163b44'},
-  canyon:{name:'The copper canyons',ground:'#ad8863',fleck:'#92714f',light:'#cbb78a',cliff:'#694e40',cliffFace:'#936b4c',edge:'#d9bd86',path:'#e3cc9e',tree:'#92784e',water:'#568b8d',accent:'#ffd393',sky:'#453b3a'},
-  dusk:{name:'The violet ridgelands',ground:'#79718b',fleck:'#5d5c77',light:'#aaa1b8',cliff:'#454259',cliffFace:'#655d7b',edge:'#b4abc6',path:'#ccbdac',tree:'#6c658c',water:'#697a9e',accent:'#e7bcf1',sky:'#37344e'},
-  summit:{name:'The cloud gardens',ground:'#b5c4b6',fleck:'#95aa9e',light:'#e4e4cb',cliff:'#6e8890',cliffFace:'#8ca4a0',edge:'#e1e7d0',path:'#e6dcb9',tree:'#98b8a4',water:'#80b9c3',accent:'#ffe7ab',sky:'#5d8091'}
+  forest:{name:'The living forest',ground:'#345e4c',fleck:'#2b5144',light:'#8fbd86',cliff:'#405e46',cliffFace:'#526b4f',edge:'#aec07a',path:'#a6b58d',tree:'#386a45',water:'#367f78',accent:'#f7cc79',sky:'#204b49'},
+  ruins:{name:'The blue stone ruins',ground:'#374e65',fleck:'#2d4056',light:'#9fb6c1',cliff:'#394e62',cliffFace:'#526776',edge:'#a9bdbb',path:'#91a5b0',tree:'#4b7279',water:'#44788f',accent:'#afe3ed',sky:'#203747'},
+  marsh:{name:'The lantern wetlands',ground:'#255653',fleck:'#1c4648',light:'#83bc9d',cliff:'#214f49',cliffFace:'#38695b',edge:'#9ab99a',path:'#b9b58d',tree:'#397b67',water:'#2a596a',accent:'#9ae1cb',sky:'#163b44'},
+  canyon:{name:'The copper canyons',ground:'#87684f',fleck:'#71563f',light:'#d3b58a',cliff:'#694e40',cliffFace:'#936b4c',edge:'#d9bd86',path:'#e3cc9e',tree:'#92784e',water:'#568b8d',accent:'#ffd393',sky:'#453b3a'},
+  dusk:{name:'The violet ridgelands',ground:'#514360',fleck:'#433957',light:'#b19dc8',cliff:'#454259',cliffFace:'#655d7b',edge:'#b4abc6',path:'#ccbdac',tree:'#6c658c',water:'#697a9e',accent:'#e7bcf1',sky:'#37344e'},
+  summit:{name:'The cloud gardens',ground:'#a1b7b1',fleck:'#8ca59f',light:'#e4edd9',cliff:'#6e8890',cliffFace:'#8ca4a0',edge:'#e1e7d0',path:'#e6dcb9',tree:'#98b8a4',water:'#80b9c3',accent:'#ffe7ab',sky:'#5d8091'}
 };
 // Each stop has its own objective, encounter mix, layout seed and guardian.
 const specs = [

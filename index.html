@@ -790,6 +790,49 @@ h1 {
 }
 .q textarea { min-height: 96px; resize: vertical; }
 .q textarea:focus, .q select:focus { outline: 2px solid var(--c); outline-offset: 1px; }
+
+/* Dictation: a mic in the corner of each written answer */
+.ta-wrap { position: relative; }
+.ta-wrap.has-mic textarea { padding-right: 58px; }
+.ta-wrap.listening textarea { outline: 2px solid var(--c); outline-offset: 1px; }
+.mic {
+  position: absolute; right: 12px; bottom: 12px;
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease, border-color .2s ease;
+}
+.mic:hover { background: var(--chip-hover); }
+.mic:focus-visible { outline: 2px solid var(--c); outline-offset: 2px; }
+.mic svg { width: 19px; height: 19px; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.mic.on { background: var(--c); border-color: transparent; color: #fff; animation: mic-pulse 1.6s ease-out infinite; }
+@keyframes mic-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 45%, transparent); }
+  100% { box-shadow: 0 0 0 12px color-mix(in srgb, var(--c) 0%, transparent); }
+}
+.mic-bars {
+  position: absolute; right: 19px; bottom: 60px;
+  display: none; gap: 3px; align-items: center; height: 18px;
+  pointer-events: none;
+}
+.ta-wrap.listening .mic-bars { display: inline-flex; }
+.mic-bars i { width: 3px; height: 4px; border-radius: 2px; background: var(--c); }
+.ta-wrap.hearing .mic-bars i { animation: mic-bar .8s ease-in-out infinite; }
+.mic-bars i:nth-child(2) { animation-delay: -.6s; }
+.mic-bars i:nth-child(3) { animation-delay: -.3s; }
+.mic-bars i:nth-child(4) { animation-delay: -.5s; }
+.mic-bars i:nth-child(5) { animation-delay: -.15s; }
+@keyframes mic-bar { 0%, 100% { height: 4px; } 50% { height: 18px; } }
+.mic-note { margin: -2px 0 0; color: var(--ink-soft); font-size: 13px; }
+@media (prefers-reduced-motion: reduce) {
+  .mic.on, .ta-wrap.hearing .mic-bars i { animation: none; }
+  .ta-wrap.hearing .mic-bars i { height: 12px; }
+}
 .scale { display: grid; grid-template-columns: minmax(0, 1fr) 52px; align-items: center; gap: 14px; }
 .scale input[type="range"] { width: 100%; accent-color: var(--c); }
 .scale-val {
@@ -811,6 +854,9 @@ h1 {
 .ready h3, .working h3 { margin: 0 0 10px; font-family: var(--font-display); font-weight: 700; font-size: 30px; }
 .ready p, .working p { color: var(--ink-soft); max-width: 58ch; }
 .error-note { color: var(--love); font-weight: 500; }
+.ready .ai-note { margin: 14px 0 10px; font-size: 13.5px; }
+.ready .linkish { color: var(--ink-soft); font-size: 14px; font-weight: 500; }
+.ready .linkish:hover { color: var(--ink); }
 .working svg { width: 100%; max-width: 420px; height: 90px; display: block; margin: 18px 0; }
 .working .w-path { fill: none; stroke: var(--ink-faint); stroke-width: 2; stroke-dasharray: 6 6; }
 .working .w-walk { fill: none; stroke: var(--summit); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 60 600; animation: walk 2.4s linear infinite; }
@@ -1225,7 +1271,7 @@ body.has-player .story { padding-bottom: 150px; }
 
       <div class="outro-journal">
         <h3>Where are you on it?</h3>
-        <p>Answer fifteen questions in your Trail Journal. It places you at a stop and shows you the next one. Your answers stay in this browser and never leave it.</p>
+        <p>Answer fifteen questions in your Trail Journal. It places you at a stop and shows you the next one. Your answers stay in this browser unless you ask Claude to write your reading.</p>
         <button type="button" class="cta" data-open-journal>Open the Trail Journal</button>
       </div>
 
@@ -1240,7 +1286,7 @@ body.has-player .story { padding-bottom: 150px; }
 
       <footer class="site-foot">
         <p class="brand">gnarcoding.com</p>
-        <p>Your Trail Journal stays in this browser. Nothing you write is sent anywhere, and clearing your browser data erases it.</p>
+        <p>Your Trail Journal saves in this browser, and clearing your browser data erases it. Your answers only leave it if you ask Claude to write your reading, and this site doesn't keep them.</p>
         <p><a href="/book">Book an hour</a></p>
       </footer>
     </section>

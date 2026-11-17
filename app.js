@@ -1898,10 +1898,12 @@
     document.documentElement.style.overflow = "hidden";
     renderPortal();
     setStatus(baseStatus());
+    if (!AI.checked) checkAi(function () { if (!portalEl.hidden && !reading.busy && (portalStep === 0 || (portalStep === 6 && !viewing))) renderPortal(); });
     var t = document.getElementById("portalTitle");
     if (t) t.focus();
   }
   function closePortal() {
+    stopDictation();
     portalEl.hidden = true;
     document.documentElement.style.overflow = "";
     if (J.saveTimer) { clearTimeout(J.saveTimer); saveDraft(); }
@@ -1924,7 +1926,13 @@
   }
   jBack.addEventListener("click", function () { goStep(portalStep - 1); });
   jNext.addEventListener("click", function () {
-    if (portalStep === 5) { goStep(6); runReading(); return; }
+    if (portalStep === 5) {
+      checkAi(function () {
+        if (AI.available) { viewing = null; reading.error = ""; portalStep = 6; renderPortal(); portalBody.scrollTop = 0; }
+        else { goStep(6); runReading(); }
+      });
+      return;
+    }
     if (portalStep === 6) {
       var st = viewing ? stopById(viewing.reading.stopId) : null;
       if (st) { closePortal(); goToStop(st.n); }
@@ -1936,6 +1944,7 @@
   /* ---------- Rendering the portal ---------- */
 
   function renderPortal() {
+    stopDictation();
     // Step bar
     portalSteps.innerHTML = "";
     JOURNAL_STEPS.concat([{ label: "Your reading", css: "var(--summit)" }]).forEach(function (s, i) {
@@ -1975,15 +1984,20 @@
     var latest = latestEntry();
     var latestStop = latest ? stopById(latest.reading.stopId) : null;
     var saveLine = !J.ready ? "Checking whether this browser can save your answers\u2026"
-      : J.db ? "Your answers save in this browser as you type. Nothing is sent anywhere: there's no account and no server, so nobody else can read them. Clearing your browser data erases them."
+      : J.db ? (AI.available
+        ? "Your answers save in this browser as you type. There's no account, and nobody else can read them. They only leave this browser if you ask Claude to write your reading, and this site doesn't keep them. Clearing your browser data erases them."
+        : "Your answers save in this browser as you type. Nothing is sent anywhere: there's no account and no server, so nobody else can read them. Clearing your browser data erases them.")
       : "This browser isn't letting the page save (a private window can do that), so your answers last until you close the page.";
-    var readLine = "When you finish, the journal places you at a stop on the mountain and shows your four circles, what stands out in your answers, your next stop and three steps for the next month.";
+    var readLine = AI.available
+      ? "When you finish, Claude, Anthropic's AI, reads your answers and places you at a stop on the mountain: your four circles, what stands out in what you wrote, your next stop and three steps for the next month. If you'd rather keep everything here, you can get a quick reading worked out in your browser instead."
+      : "When you finish, the journal places you at a stop on the mountain and shows your four circles, what stands out in your answers, your next stop and three steps for the next month.";
+    var talkLine = SpeechRec ? "Rather talk than type? Tap the mic on any written question and speak. Your browser turns your speech into text, and may send the audio to its maker (Google in Chrome, Apple in Safari) to do it." : "";
 
     var w = el('<div class="welcome"></div>');
     w.appendChild(el("<h3>Find where you are on the mountain</h3>"));
     w.appendChild(el("<p>Fifteen questions, one face at a time, then a reading. Most people take about ten minutes. There are no right answers, only honest ones, and you can skip anything.</p>"));
     var facts = el('<ul class="facts"></ul>');
-    [saveLine, readLine, "Every reading is kept, so you can come back in a few months, answer again and see how far you've moved."].forEach(function (t) {
+    [saveLine, readLine, talkLine, "Every reading is kept, so you can come back in a few months, answer again and see how far you've moved."].filter(Boolean).forEach(function (t) {
       var li = document.createElement("li"); li.textContent = t; facts.appendChild(li);
     });
     w.appendChild(facts);
@@ -2022,6 +2036,102 @@
       w.appendChild(row);
     }
     portalBody.appendChild(w);
+  }
+
+  /* ---------- Talk instead of type ---------- */
+
+  // Uses the browser's own speech recognition (Chrome, Edge, Safari). Words
+  // appear in the answer as they're spoken, like dictation in the Claude app.
+  // Browsers without it (Firefox) simply don't show the mic.
+  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  var dict = null;  // { rec, q, ta, btn, note, base, sep, finals, stopped }
+
+  var MIC_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3.5 3.5 0 0 0 3.5-3.5v-5a3.5 3.5 0 1 0-7 0v5A3.5 3.5 0 0 0 12 15z"/><path d="M18.5 11.5a6.5 6.5 0 0 1-13 0M12 18v3" fill="none"/></svg>';
+  var STOP_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2.2"/></svg>';
+
+  function dictationNote(text) {
+    if (!dict || !dict.note) return;
+    dict.note.textContent = text || "";
+    dict.note.hidden = !text;
+  }
+  function writeDictation(spoken) {
+    if (!dict) return;
+    var t = spoken.replace(/\s+/g, " ").trim();
+    // Start a fresh sentence with a capital letter.
+    if (t && (!dict.base.trim() || /[.!?]\s*$/.test(dict.base))) t = t.charAt(0).toUpperCase() + t.slice(1);
+    var value = (dict.base + (t ? dict.sep + t : "")).slice(0, 2000);
+    dict.ta.value = value;
+    journal.answers[dict.q.id] = value;
+    dict.ta.scrollTop = dict.ta.scrollHeight;
+    scheduleSave();
+  }
+  function stopDictation(keepNote) {
+    if (!dict) return;
+    var d = dict;
+    d.stopped = true;
+    try { d.rec.stop(); } catch (e) { /* already stopped */ }
+    clearTimeout(d.quiet);
+    // What's on screen when listening stops is what's kept.
+    journal.answers[d.q.id] = d.ta.value;
+    scheduleSave();
+    d.btn.classList.remove("on");
+    d.btn.setAttribute("aria-pressed", "false");
+    d.btn.setAttribute("aria-label", "Dictate your answer");
+    d.btn.innerHTML = MIC_ICON;
+    d.ta.closest(".ta-wrap").classList.remove("listening", "hearing");
+    if (!keepNote) dictationNote("");
+    dict = null;
+  }
+  function startDictation(q, ta, btn, note) {
+    var same = dict && dict.ta === ta;
+    if (dict) stopDictation();
+    if (same) return;
+    var rec;
+    try { rec = new SpeechRec(); } catch (e) { return; }
+    rec.lang = navigator.language || "en-US";
+    rec.continuous = true;
+    rec.interimResults = true;
+    var base = ta.value;
+    dict = { rec: rec, q: q, ta: ta, btn: btn, note: note, base: base, sep: base && !/\s$/.test(base) ? " " : "", finals: "", stopped: false };
+    var mine = dict;
+
+    rec.onresult = function (e) {
+      if (dict !== mine) return;
+      var finals = "", interim = "";
+      for (var i = 0; i < e.results.length; i++) {
+        var r = e.results[i], text = r[0] ? r[0].transcript : "";
+        if (!r.isFinal) { interim += " " + text; continue; }
+        // Some Android builds repeat everything said so far in each result.
+        var a = finals.trim().toLowerCase(), b = text.trim().toLowerCase();
+        finals = a && b.indexOf(a) === 0 ? text : finals + " " + text;
+      }
+      mine.finals = finals;
+      writeDictation(finals + interim);
+      mine.ta.closest(".ta-wrap").classList.add("hearing");
+      clearTimeout(mine.quiet);
+      mine.quiet = setTimeout(function () { if (mine.ta) mine.ta.closest(".ta-wrap").classList.remove("hearing"); }, 700);
+    };
+    rec.onerror = function (e) {
+      if (dict !== mine) return;
+      var msg = {
+        "not-allowed": "Your browser is blocking the microphone. Allow it for this site in your browser's settings, then tap the mic again.",
+        "service-not-allowed": "Your browser is blocking the microphone. Allow it for this site in your browser's settings, then tap the mic again.",
+        "audio-capture": "No microphone was found. Check that one is connected and not in use by another app.",
+        "network": "Dictation needs an internet connection in this browser.",
+        "no-speech": "Didn't catch anything. Tap the mic and try again."
+      }[e.error];
+      stopDictation(true);
+      if (msg) { mine.note.textContent = msg; mine.note.hidden = false; }
+    };
+    rec.onend = function () { if (dict === mine) stopDictation(true); };
+
+    try { rec.start(); } catch (e) { dict = null; return; }
+    btn.classList.add("on");
+    btn.setAttribute("aria-pressed", "true");
+    btn.setAttribute("aria-label", "Stop dictating");
+    btn.innerHTML = STOP_ICON;
+    ta.closest(".ta-wrap").classList.add("listening");
+    dictationNote("Listening. Speak your answer, then tap stop.");
   }
 
   function renderSection(step) {
@@ -2095,8 +2205,25 @@
         ta.id = fid;
         ta.maxLength = 2000;
         ta.value = journal.answers[q.id] || "";
-        ta.addEventListener("input", function () { journal.answers[q.id] = ta.value; scheduleSave(); });
-        box.appendChild(ta);
+        ta.addEventListener("input", function () {
+          // Typing while dictating keeps what was typed and stops listening.
+          if (dict && dict.ta === ta) stopDictation();
+          journal.answers[q.id] = ta.value; scheduleSave();
+        });
+        var taWrap = el('<div class="ta-wrap"></div>');
+        taWrap.appendChild(ta);
+        box.appendChild(taWrap);
+        if (SpeechRec) {
+          taWrap.classList.add("has-mic");
+          var mic = el('<button type="button" class="mic" aria-pressed="false" aria-label="Dictate your answer" title="Talk instead of typing"></button>');
+          mic.innerHTML = MIC_ICON;
+          mic.setAttribute("aria-controls", fid);
+          var note = el('<p class="mic-note" role="status" hidden></p>');
+          mic.addEventListener("click", function () { startDictation(q, ta, mic, note); });
+          taWrap.appendChild(mic);
+          taWrap.appendChild(el('<span class="mic-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>'));
+          box.appendChild(note);
+        }
       }
       wrap.appendChild(box);
     });
@@ -2106,7 +2233,7 @@
   function renderReadingStep() {
     if (reading.busy) {
       var wk = el('<div class="working"><h3>Reading your climb…</h3>' +
-        '<p>Looking at every answer to find where you’re standing.</p>' +
+        '<p>' + (reading.ai ? 'Claude is reading every answer to find where you’re standing. This usually takes about twenty seconds.' : 'Looking at every answer to find where you’re standing.') + '</p>' +
         '<svg viewBox="0 0 420 90" aria-hidden="true"><path class="w-path" d="M10 80 C 80 78, 90 50, 150 52 S 230 70, 260 40 S 340 30, 410 10"/>' +
         '<path class="w-walk" d="M10 80 C 80 78, 90 50, 150 52 S 230 70, 260 40 S 340 30, 410 10"/></svg></div>');
       var stop = el('<button type="button" class="ghost">Stop</button>');
@@ -2127,6 +2254,14 @@
       go.textContent = n ? "Read my climb" : "Go to the first question";
       go.addEventListener("click", function () { if (n) runReading(); else goStep(1); });
       rd.appendChild(go);
+      if (n && AI.available) {
+        var consent = el('<p class="ai-note"></p>');
+        consent.textContent = "Claude, Anthropic's AI, writes this reading from your answers. They're sent to Anthropic to write it, and this site doesn't keep them.";
+        rd.appendChild(consent);
+        var local = el('<button type="button" class="linkish">Or get a quick reading that never leaves this browser</button>');
+        local.addEventListener("click", function () { runReading({ local: true }); });
+        rd.appendChild(local);
+      }
       portalBody.appendChild(rd);
       renderHistory();
       return;
@@ -2153,7 +2288,7 @@
     var box = el('<div class="reading"></div>');
 
     var kicker = el('<p class="r-kicker"></p>');
-    kicker.textContent = "Your reading · " + fmtDate(entry.createdAt);
+    kicker.textContent = "Your reading · " + fmtDate(entry.createdAt) + (entry.source === "claude" ? " · written by Claude" : "");
     box.appendChild(kicker);
     var title = el('<h3 class="r-title"></h3>');
     title.textContent = st ? "Stop " + st.n + ": " + st.data.title : "Your stop";
@@ -2231,7 +2366,10 @@
       actions.appendChild(show);
     }
     var again = el('<button type="button" class="ghost">Read again with my latest answers</button>');
-    again.addEventListener("click", runReading);
+    again.addEventListener("click", function () {
+      if (AI.available) { viewing = null; reading.error = ""; renderPortal(); portalBody.scrollTop = 0; }
+      else runReading();
+    });
     var edit = el('<button type="button" class="ghost">Change my answers</button>');
     edit.addEventListener("click", function () { goStep(1); });
     var talk = el('<a class="ghost" href="/book">Talk it through: book an hour</a>');
@@ -2320,7 +2458,8 @@
     var sp = cut.lastIndexOf(" ");
     return (sp > max * 0.6 ? cut.slice(0, sp) : cut).replace(/[,;:\s]+$/, "") + "…";
   }
-  function q(s) { return "“" + clip(s, 80) + "”"; }
+  // Named so nothing else in this file can shadow it (the terrain code has its own "q").
+  function quoted(s) { return "“" + clip(s, 80) + "”"; }
   function lower(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
   function firstSentences(text, n) {
     var parts = String(text).match(/[^.!?]+[.!?]+(\s|$)/g) || [text];
@@ -2334,27 +2473,47 @@
   var GROW_STEPS = {
     love: function (a) {
       return hasText(a.love_hours)
-        ? "Put one protected hour on your calendar this week for " + q(a.love_hours) + ", and treat it like a meeting you can't move."
+        ? "Put one protected hour on your calendar this week for " + quoted(a.love_hours) + ", and treat it like a meeting you can't move."
         : "Put one protected hour on your calendar this week for the thing you'd do for free, and treat it like a meeting you can't move.";
     },
     good: function (a) {
       return hasText(a.good_growing)
-        ? "Do twenty small reps of " + q(a.good_growing) + " this month. Count reps, not results."
+        ? "Do twenty small reps of " + quoted(a.good_growing) + " this month. Count reps, not results."
         : "Pick one skill you want and do twenty small reps of it this month. Count reps, not results.";
     },
     needs: function (a) {
       return hasText(a.needs_problem)
-        ? "Spend one hour this month close to " + q(a.needs_problem) + ". Volunteer, talk to someone who lives with it, or read their side of it."
+        ? "Spend one hour this month close to " + quoted(a.needs_problem) + ". Volunteer, talk to someone who lives with it, or read their side of it."
         : "Spend one hour this month close to a problem you care about. Volunteer, talk to someone who lives with it, or read their side of it.";
     },
     paid: function (a) {
       return hasText(a.paid_ask)
-        ? "Write down a real price for " + q(a.paid_ask) + " and say it out loud to one person this month."
+        ? "Write down a real price for " + quoted(a.paid_ask) + " and say it out loud to one person this month."
         : "Write down the number you actually need to live on, then compare it with what you earn and spend now.";
     }
   };
 
   var CARE_WORDS = /suicid|kill myself|end my life|end it all|want to die|wanna die|self[- ]?harm|hurt myself|cutting myself|no reason to live|better off dead/;
+
+  // How far they've moved since their last reading.
+  function movementText(st, c) {
+    var movement = "";
+    var prev = latestEntry();
+    var prevStop = prev ? stopById(prev.reading.stopId) : null;
+    if (prevStop) {
+      var moved = st.n - prevStop.n, when = dayOf(prev.createdAt);
+      if (moved > 0) movement = "Since your reading on " + when + ", you've climbed " + moved + (moved === 1 ? " stop" : " stops") + ", up from Stop " + prevStop.n + ".";
+      else if (moved < 0) movement = "Since your reading on " + when + ", you're " + (-moved) + (moved === -1 ? " stop" : " stops") + " lower than Stop " + prevStop.n + ". Sliding back is part of every climb.";
+      else movement = "You're at the same stop as your reading on " + when + ". Some stops take more than one season.";
+      var pc = prev.reading.circles || {}, best = null;
+      CIRCLE_KEYS.forEach(function (k) {
+        var d = c[k] - (Number(pc[k]) || 0);
+        if (!best || Math.abs(d) > Math.abs(best.d)) best = { k: k, d: d };
+      });
+      if (best && Math.abs(best.d) >= 2) movement += " The biggest change is in " + lower(CIRCLE_NAMES[best.k]) + ", " + (best.d > 0 ? "up " : "down ") + Math.abs(best.d) + ".";
+    }
+    return movement;
+  }
 
   function quickReading() {
     var a = journal.answers;
@@ -2384,22 +2543,7 @@
       else why = "You rated " + listJoin(highs, "and") + " at 6 or higher, and the rest lower. That puts you here.";
     }
 
-    // Movement since last time
-    var movement = "";
-    var prev = latestEntry();
-    var prevStop = prev ? stopById(prev.reading.stopId) : null;
-    if (prevStop) {
-      var moved = st.n - prevStop.n, when = dayOf(prev.createdAt);
-      if (moved > 0) movement = "Since your reading on " + when + ", you've climbed " + moved + (moved === 1 ? " stop" : " stops") + ", up from Stop " + prevStop.n + ".";
-      else if (moved < 0) movement = "Since your reading on " + when + ", you're " + (-moved) + (moved === -1 ? " stop" : " stops") + " lower than Stop " + prevStop.n + ". Sliding back is part of every climb.";
-      else movement = "You're at the same stop as your reading on " + when + ". Some stops take more than one season.";
-      var pc = prev.reading.circles || {}, best = null;
-      CIRCLE_KEYS.forEach(function (k) {
-        var d = c[k] - (Number(pc[k]) || 0);
-        if (!best || Math.abs(d) > Math.abs(best.d)) best = { k: k, d: d };
-      });
-      if (best && Math.abs(best.d) >= 2) movement += " The biggest change is in " + lower(CIRCLE_NAMES[best.k]) + ", " + (best.d > 0 ? "up " : "down ") + Math.abs(best.d) + ".";
-    }
+    var movement = movementText(st, c);
 
     // What stands out
     var patterns = [];
@@ -2415,9 +2559,9 @@
       patterns.push("Your scores alone would put you near Stop " + scoreStop.n + ", " + scoreStop.data.title + ". Read both and notice which one stings more.");
     }
     if (hasText(a.love_hours) && hasText(a.needs_problem)) {
-      patterns.push("You could spend hours on " + q(a.love_hours) + ", and you notice " + q(a.needs_problem) + ". Ask whether there's a version of the first that serves the second.");
+      patterns.push("You could spend hours on " + quoted(a.love_hours) + ", and you notice " + quoted(a.needs_problem) + ". Ask whether there's a version of the first that serves the second.");
     } else if (hasText(a.good_asked) && hasText(a.paid_ask)) {
-      patterns.push("People already come to you for " + q(a.good_asked) + ", and you'd charge for " + q(a.paid_ask) + " if you weren't afraid to ask. Where those overlap, you have a price to name.");
+      patterns.push("People already come to you for " + quoted(a.good_asked) + ", and you'd charge for " + quoted(a.paid_ask) + " if you weren't afraid to ask. Where those overlap, you have a price to name.");
     }
     var skipped = ALL_QS.length - countAnswered();
     if (skipped >= 5) patterns.push("You skipped " + skipped + " questions. The reading gets more specific the more you write.");
@@ -2449,7 +2593,61 @@
     };
   }
 
-  function runReading() {
+  /* ---------- Claude's reading ---------- */
+
+  // When the site has an API key, Claude writes the reading from the answers
+  // (api/reading.mjs). The circles, movement and next stop still come from the
+  // page. Anything going wrong falls back to the reading worked out here.
+  var AI = { checked: false, available: false, pending: null };
+  function checkAi(cb) {
+    if (!AI.pending) {
+      AI.pending = fetch("/api/reading", { cache: "no-store", headers: { Accept: "application/json" } })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) { AI.available = !!(j && j.available); }, function () { AI.available = false; })
+        .then(function () { AI.checked = true; });
+    }
+    AI.pending.then(function () { if (cb) cb(); });
+  }
+
+  function readingPayload() {
+    var ans = {};
+    ALL_QS.forEach(function (qq) {
+      var v = journal.answers[qq.id];
+      if (v !== undefined && v !== null && v !== "") ans[qq.id] = typeof v === "string" ? v.slice(0, 2000) : v;
+    });
+    return {
+      startSide: SIDES[startIdx].key,
+      trail: stops.map(function (st) { return { id: st.id, place: st.place }; }),
+      answers: ans
+    };
+  }
+
+  function mergeReading(base, ai) {
+    var st = stopById(ai.stopId);
+    var r = Object.assign({}, base);
+    r.stopId = st.id;
+    r.nextStopId = stops[st.n] ? stops[st.n].id : "";
+    r.movement = movementText(st, base.circles);
+    if (ai.why) r.why = ai.why;
+    if (ai.summary) r.summary = ai.summary;
+    if (ai.voice) r.voice = ai.voice;
+    if (ai.patterns && ai.patterns.length) r.patterns = ai.patterns.slice(0, 4);
+    if (ai.steps && ai.steps.length) r.steps = ai.steps.slice(0, 3);
+    if (ai.question) r.question = ai.question;
+    if (!r.care && ai.care) r.care = ai.care;
+    r.note = "Written by Claude, Anthropic's AI, from your answers.";
+    return r;
+  }
+
+  function fallbackNote(status, j) {
+    var err = j && j.error;
+    if (err === "out_of_credits" || err === "not_configured") AI.available = false;
+    if (status === 429) return "You've asked for several readings in a short time, so this one was worked out in your browser. Claude can write another one a little later.";
+    if (status === 503) return "Claude readings are taking a break right now, so this one was worked out in your browser.";
+    return "Claude couldn't finish this reading, so this one was worked out in your browser. Try again in a little while.";
+  }
+
+  function runReading(opts) {
     if (reading.busy) return;
     if (!countAnswered()) { goStep(1); return; }
     reading.error = "";
@@ -2478,10 +2676,38 @@
     if (!J.ready) {
       reading.busy = true;
       renderPortal();
-      whenReady(function () { reading.busy = false; runReading(); });
+      whenReady(function () { reading.busy = false; runReading(opts); });
       return;
     }
-    finish(quickReading(), "browser");
+    var base = quickReading();
+    if (!AI.available || (opts && opts.local)) { finish(base, "browser"); return; }
+
+    var ctl = window.AbortController ? new AbortController() : null;
+    reading.busy = true; reading.ai = true; reading.ctl = ctl;
+    portalStep = 6; viewing = null;
+    renderPortal();
+    portalBody.scrollTop = 0;
+    fetch("/api/reading", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(readingPayload()),
+      signal: ctl ? ctl.signal : undefined
+    })
+      .then(function (r) { return r.json().catch(function () { return null; }).then(function (j) { return { status: r.status, j: j }; }); })
+      .then(function (res) {
+        if (reading.ctl !== ctl) return;
+        reading.ai = false;
+        var ai = res.j && res.j.reading;
+        if (res.status === 200 && ai && stopById(ai.stopId)) { finish(mergeReading(base, ai), "claude"); return; }
+        base.note = fallbackNote(res.status, res.j);
+        finish(base, "browser");
+      }, function (err) {
+        if (reading.ctl !== ctl) return;
+        reading.ai = false;
+        if (err && err.name === "AbortError") { reading.busy = false; reading.ctl = null; renderPortal(); return; }
+        base.note = "Claude couldn't be reached just now, so this reading was worked out in your browser. Try again in a little while.";
+        finish(base, "browser");
+      });
   }
 
   /* ------------------------------------------------------------------ */

@@ -190,7 +190,12 @@ const clean = (s) => String(s || "").replace(/\s*—\s*/g, ", ").trim();
 export default async function handler(req, res) {
   const key = process.env.ANTHROPIC_API_KEY || "";
 
-  if (req.method === "GET") return send(res, 200, { available: Boolean(key) });
+  if (req.method === "GET") {
+    // Only offer Claude when there's a key and the stops can be read.
+    let stops = 0;
+    try { stops = allStopIds((await loadData()).d).length; } catch { /* reported as 0 */ }
+    return send(res, 200, { available: Boolean(key) && stops === 27, stops });
+  }
   if (req.method !== "POST") return send(res, 405, { error: "method" }, { Allow: "GET, POST" });
   if (!allowedOrigin(req.headers.origin)) return send(res, 403, { error: "origin" });
   if (!key) return send(res, 503, { error: "not_configured" });

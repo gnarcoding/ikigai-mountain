@@ -2991,7 +2991,7 @@
           title: st.data.title,
           artist: (st.kind === "intro" ? "Introduction" : "Stop " + st.n) + " · The Ikigai Mountain",
           album: "gnarcoding.com",
-          artwork: [{ src: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }]
+          artwork: [{ src: "/apple-touch-icon.png?v=2", sizes: "180x180", type: "image/png" }]
         });
       }
     }

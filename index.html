@@ -671,6 +671,8 @@ h1 {
 .outro-journal { margin: 0 0 40px; padding: 20px 22px; border: 1px solid var(--line); border-radius: 14px; }
 .outro-journal h3 { margin: 0 0 6px; font-family: var(--font-display); font-size: 22px; }
 .outro-journal p { margin: 0 0 14px; color: var(--ink-soft); }
+.outro-journal .outro-mail { margin: 14px 0 0; font-size: 14px; }
+.outro-mail a { color: var(--ink); font-weight: 700; text-underline-offset: 3px; }
 
 .lbl-you {
   display: inline-flex; align-items: center; gap: 6px;
@@ -1171,8 +1173,6 @@ body.has-player .story { padding-bottom: 150px; }
 .book-tag:hover { box-shadow: 0 10px 28px rgba(10, 14, 24, 0.24); transform: translateY(-1px); }
 .book-tag:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .book-tag-avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
-.book-tag-price { font-weight: 500; color: var(--ink-soft); }
-.book-tag-price::before { content: "·"; margin-right: 7px; }
 .book-tag.out {
   opacity: 0;
   visibility: hidden;
@@ -1278,8 +1278,9 @@ body.has-player .story { padding-bottom: 150px; }
 
       <div class="outro-journal">
         <h3>Want company on the climb?</h3>
-        <p>Book a one-on-one hour for $100. Bring a direction question, a codebase or a security problem, and your journal reading if you have one.</p>
+        <p>Book a one-on-one hour with me. Bring a direction question, a codebase or a security problem, and your journal reading if you have one.</p>
         <a class="cta" href="/book">Book an hour</a>
+        <p class="outro-mail">Rather write first? <a href="mailto:eric@gnarcoding.com">eric@gnarcoding.com</a></p>
       </div>
 
       <p class="label">The whole trail</p>
@@ -1288,22 +1289,22 @@ body.has-player .story { padding-bottom: 150px; }
       <footer class="site-foot">
         <p class="brand">gnarcoding.com</p>
         <p>Your Trail Journal saves in this browser, and clearing your browser data erases it. Your answers only leave it if you ask Claude to write your reading, and this site doesn't keep them.</p>
-        <p><a href="/book">Book an hour</a></p>
+        <p><a href="/book">Book an hour</a> · <a href="mailto:eric@gnarcoding.com">eric@gnarcoding.com</a></p>
       </footer>
     </section>
   </main>
 </div>
 
-<a class="book-tag out" id="bookTag" href="/book" aria-label="Book an hour with Eric, $100">
+<a class="book-tag out" id="bookTag" href="/book" aria-label="Book an hour with Eric">
   <img class="book-tag-avatar" src="/img/eric-96.webp" srcset="/img/eric-96.webp 96w, /img/eric-192.webp 192w" sizes="30px" width="30" height="30" alt="">
-  <span>Book an hour</span><span class="book-tag-price">$100</span>
+  <span>Book an hour</span>
 </a>
 
 <aside class="nudge" id="nudge" hidden aria-labelledby="nudgeTitle">
   <img class="nudge-avatar" src="/img/eric-96.webp" srcset="/img/eric-96.webp 96w, /img/eric-192.webp 192w" sizes="44px" width="44" height="44" alt="Eric">
   <div class="nudge-body">
     <p class="nudge-title" id="nudgeTitle">Got a project in mind?</p>
-    <p class="nudge-text">I'm Eric. Let's get on a call, talk it through and plan how to build it. One hour, one on one, $100.</p>
+    <p class="nudge-text">I'm Eric. Let's get on a call, talk it through and plan how to build it. One hour, one on one.</p>
     <div class="nudge-actions">
       <a class="nudge-book" href="/book">Book a call</a>
       <button type="button" class="nudge-later" id="nudgeLater">Maybe later</button>
